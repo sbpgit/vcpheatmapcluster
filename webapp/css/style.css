@@ -1,0 +1,407 @@
+/* Base styles */
+
+table {
+    box-sizing: border-box;
+    border-collapse: separate;
+    border-spacing: 0;
+    background-color: #ffffff;
+}
+
+/* PivotTable UI container */
+.pvtUi {
+    color: #1a1a1a;
+    font-family: "72", "Arial", sans-serif;
+}
+
+/* Main pivot table */
+table.pvtTable {
+    font-size: 9pt;
+    background-color: #ffffff;
+    border: 0px solid #d9dadb;
+    border-radius: 4px;
+    line-height: 0.5;
+}
+
+/* Table headers */
+table.pvtTable thead th {
+    background-color: #f2f2f2;
+    color: #0b74de;
+    padding: 5px !important; 
+    font-size: 5pt;
+    text-align: left; 
+    border-bottom: 0px solid #d9dadb;
+    border-top: 0px solid #d9dadb;
+   
+}
+
+/* Row headers */
+table.pvtTable tbody tr th {
+    background-color: #f9fafb;
+    color: #0b74de;
+    /* padding: 5px;
+    font-size: 4pt;
+    text-align: left;
+    border-bottom: 1px solid #e5e5e5; */
+}
+
+/* Table cells */
+table.pvtTable tbody tr td {
+    padding: 0px;
+    border: 1px solid #d9dadb;
+    text-align: center;
+    color: white;
+    background-color: #ffffff;
+    line-height: 0.2;
+}
+
+/* Even row cells */
+table.pvtTable tbody tr:nth-child(even) td {
+    background-color: #ffffff;
+}
+
+/* Column labels */
+table.pvtTable .pvtColLabel {
+    font-size: small;
+    font-weight: bold;
+    background-color: #f2f2f2;
+    color: #023047 !important;
+    padding: 5px;
+}
+
+/* Total labels */
+table.pvtTable .pvtTotalLabel {
+    background-color: #f9fafb;
+    color: #0b74de;
+    padding: 10px;
+    font-weight: bold;
+    text-align: right;
+}
+
+/* Grand totals and totals */
+.pvtGrandTotal,
+.pvtTotal {
+    font-weight: bold;
+    background-color: #f2f2f2;
+    color: #0b74de;
+    padding: 10px;
+}
+
+/* Values area */
+.pvtVals {
+    white-space: nowrap;
+    padding: 10px;
+    color: #1a1a1a;
+    border: 1px solid #d9dadb;
+    background-color: #ffffff;
+    min-width: 20px;
+    min-height: 20px;
+}
+
+/* Row values specific */
+.pvtRows .pvtVals {
+    width: 50px !important;
+}
+
+/* Column and row order controls */
+.pvtColOrder,
+.pvtRowOrder {
+    cursor: pointer;
+    margin-left: 5px;
+    display: inline-block;
+}
+
+/* Aggregator */
+.pvtAggregator {
+    margin-bottom: 5px;
+}
+
+/* Axis containers */
+.pvtAxisContainer {
+    border: 1px solid #d9dadb;
+    background-color: #ffffff;
+    padding: 10px;
+    min-width: 20px;
+    min-height: 20px;
+}
+
+/* Axis items */
+.pvtAxisContainer li {
+    list-style-type: none;
+    background-color: #ffffff;
+    border: 1px solid #d9dadb;
+    padding: 6px;
+    margin: 5px 0;
+    border-radius: 4px;
+    cursor: move;
+}
+
+/* Placeholder for axis items */
+.pvtAxisContainer li.pvtPlaceholder {
+    background-color: #f9fafb;
+    border: 1px dashed #d9dadb;
+}
+
+/* Attribute span in axis items */
+.pvtAxisContainer li span.pvtAttr {
+    background-color: #ffffff;
+    border: 1px solid #d9dadb;
+    padding: 5px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+/* Triangle control */
+.pvtTriangle {
+    cursor: pointer;
+    color: #6a6d70;
+}
+
+/* Filter box */
+.pvtFilterBox {
+    background-color: #ffffff;
+    border: 1px solid #d9dadb;
+    padding: 10px;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.pvtFilterBox h4 {
+    margin: 10px 0;
+}
+
+.pvtFilterBox label {
+    font-weight: 400;
+}
+
+/* Check container */
+.pvtCheckContainer {
+    font-size: 13px;
+    max-height: 250px;
+    overflow-y: auto;
+    border-top: 1px solid #d9dadb;
+    border-bottom: 1px solid #d9dadb;
+}
+
+/* Table cells and headers height */
+/* .pvtTable tbody tr th,
+.pvtTable thead tr th,
+.pvtTable tbody tr td {
+    height: auto;
+} */
+
+/* General table header styling */
+table th {
+    position: sticky;
+    top: 0px;
+    text-align: center;
+    border: 1px solid #ccc;
+    /* font-size: 16px; */
+    z-index: 2;
+}
+
+/* Output container */
+#output {
+    overflow: auto;
+    max-height: 95vh;
+}
+
+/* Frozen elements */
+.frezz {
+    position: sticky !important;
+    z-index: 1;
+    background-color: #e6EEEE;
+}
+
+.frezzThead {
+    position: sticky !important;
+    z-index: 3 !important;
+    background-color: #e6EEEE;
+}
+
+/* Special positioning for th.frezz and th.frezzThead */
+th.frezz {
+    position: sticky;
+    z-index: 3;
+}
+
+th.frezzThead {
+    position: sticky;
+    z-index: 200;
+}
+
+/* Sticky thead */
+thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+/* Highlighting styles */
+.highlighted-ac,
+.highlighted-qu {
+    box-shadow: rgba(50, 50, 93, 0.25) 0px 50px 100px -20px,
+        rgba(0, 0, 0, 0.3) 0px 30px 60px -30px,
+        rgba(10, 37, 64, 0.35) 0px -2px 6px 0px inset;
+}
+
+
+
+
+/* pivot table main settings */
+.mainDivClass {
+    overflow: scroll;
+    width: 100%;
+    /* height: 67vh; */
+
+    /* position: relative; */
+    height: 100vh;
+    /* overflow: auto; */
+}
+
+.mainDivClass {
+    position: relative;
+    height: 100vh;
+    overflow: auto;
+}
+
+.mainDivClass table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-top: 0;
+}
+
+.mainDivClass thead {
+    position: sticky;
+    top: 0.1px;
+    background-color: #fff;
+    z-index: 100;
+}
+
+
+/* Box sizing for tables */
+table {
+    box-sizing: border-box;
+}
+
+th.frezz {
+    position: sticky;
+    z-index: 3;
+}
+
+th.frezzThead {
+    position: sticky;
+    z-index: 200;
+}
+
+.icon {
+    visibility: hidden;
+}
+
+.selectItem:hover .icon {
+    visibility: visible;
+}
+
+
+.sapFDynamicPageContentWrapper {
+    overflow: hidden !important;
+}
+
+.sapFDynamicPageContent {
+    padding: 10px !important;
+    /* overflow: hidden; */
+}
+
+
+
+
+
+
+
+
+
+/* # popover css */
+
+.popover {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    /* bottom: 90%; */
+    /* top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 1px; */
+
+    /* Styling */
+    width: 140px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    border: 1px solid #e5e7eb;
+    padding: 10px;
+    z-index: 10000;
+
+    /* Animation */
+    transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+    transform: translateX(-50%) translateY(10px);
+}
+
+/* Show popover on hover */
+.hoverCell:hover .popover {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Popover content styling */
+.popover-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.date-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.date-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #6b7280;
+}
+
+.date-value {
+    font-size: 16px;
+    font-weight: bold;
+    color: #1f2937;
+}
+
+.popover::after {
+    content: '';
+    position: absolute;
+    /* top: 100%; */
+    /* left: 50%; */
+    transform: translateX(-50%);
+    top: auto;
+    bottom: 100%;
+    border: 6px solid transparent;
+    border-bottom-color: white;
+}
+
+/* Hover effect for th */
+.hoverCell:hover {
+    background-color: #f3f4f6;
+    cursor: pointer;
+}
+
+.label{
+    color: black;
+}
+
+
+ 
+.BlackFont {
+    color: black !important;
+    font-weight: bolder !important;
+}

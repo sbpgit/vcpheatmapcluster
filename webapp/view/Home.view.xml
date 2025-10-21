@@ -1,0 +1,70 @@
+<mvc:View controllerName="vcpapp.heatmapcl.controller.Home"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:core="sap.ui.core"
+    xmlns="sap.m"
+    xmlns:f="sap.f"
+    xmlns:html="http://www.w3.org/1999/xhtml"
+    xmlns:fb="sap.ui.comp.filterbar">
+    <Page id="page" title="HeatMap">
+        <content>
+
+            <fb:FilterBar id="filterbar" persistencyKey="myPersKey" useToolbar="false" search="onApplyFilters">
+                <fb:filterGroupItems>
+                    <fb:FilterGroupItem name="Year" mandatory="true" label="Year" groupName="Group1" visibleInFilterBar="true">
+                        <fb:control>
+                            <MultiComboBox id="mcYear" selectionFinish="onChnageYear">
+                            </MultiComboBox>
+                        </fb:control>
+                    </fb:FilterGroupItem>
+                    <fb:FilterGroupItem name="Location" mandatory="true" label="Location" groupName="Group1" visibleInFilterBar="true">
+                        <fb:control>
+                            <MultiComboBox id="mcLocation" selectionChange=".onLocationSelect">
+                                <!-- <core:Item key="PFC1" text="PFC1" /> -->
+                            </MultiComboBox >
+                        </fb:control>
+                    </fb:FilterGroupItem>
+
+                    <fb:FilterGroupItem name="Configuration Product" mandatory="true" label="Configuration Product" groupName="Group1" visibleInFilterBar="true">
+                        <fb:control>
+                            <MultiComboBox id="mcConfig"/>
+                        </fb:control>
+                    </fb:FilterGroupItem>
+                    <fb:FilterGroupItem name="Product" label="Product" mandatory="true" groupName="Group1" visibleInFilterBar="true">
+                        <fb:control>
+                            <MultiComboBox id="mcProduct" />
+                        </fb:control>
+                    </fb:FilterGroupItem>
+                    <fb:FilterGroupItem name="Cluster" label="Cluster" groupName="Group1" visibleInFilterBar="true">
+                        <fb:control>
+                            <MultiComboBox id="mcCluster" showSelectAll="true" selectionFinish="onChnageCluster">
+                            </MultiComboBox>
+                        </fb:control>
+                    </fb:FilterGroupItem>
+                    <fb:FilterGroupItem name="Primary" label="Primary ID" groupName="Group1" visibleInFilterBar="true">
+                        <fb:control>
+                            <MultiComboBox id="mcPrimary" showSelectAll="true">
+                            </MultiComboBox>
+                        </fb:control>
+                    </fb:FilterGroupItem>
+                    <fb:FilterGroupItem name="Characterist Descriptions" label="Characterist Descriptions" groupName="Group1" visibleInFilterBar="true">
+                        <fb:control>
+                            <MultiComboBox id="mcChar" showSelectAll="true" />
+                        </fb:control>
+                    </fb:FilterGroupItem>
+                </fb:filterGroupItems>
+            </fb:FilterBar>
+            <VBox id="idPivotPagePOP" busyIndicatorDelay="0">
+                <OverflowToolbar height="8%" id="toolBar" visible="{= ${oGModel>/showPivot} }">
+
+                    <ToggleButton  id ="idTogglePOP" text="Hide Char" width="100px" pressed="true" press="onTogglePress" />
+
+
+                    <!-- <Button icon="sap-icon://excel-attachment" press="onExportPivot" /> -->
+                </OverflowToolbar>
+                <!-- <table:Table visible="{= !${oGModel>/showPivot} }" width="100%" /> -->
+                <html:div id="mainDivPOP" class="mainDivClass" />
+            </VBox>
+
+        </content>
+    </Page>
+</mvc:View>
