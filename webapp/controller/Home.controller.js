@@ -24,7 +24,7 @@ sap.ui.define([
             // Dedicated endpoint that returns only years
             that.oModel.read("/getClusterHeatmap", {
                 urlParameters: {
-                    "$select": "YEAR",  // Only fetch YEAR column
+                    "$select": "YEAR",  // Only fetch YEAR column efkh
                     "$apply": "groupby((YEAR))"
                 },
                 success: function (oData) {
