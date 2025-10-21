@@ -1,5 +1,5 @@
 {
-  "xsappname": "vcpappvcpprodordconsumptionpivot",
+  "xsappname": "vcpappheatmapcl",
   "tenant-mode": "dedicated",
   "description": "Security profile of called application",
   "scopes": [
