@@ -19,25 +19,28 @@ table.pvtTable {
     background-color: #ffffff;
     border: 0px solid #d9dadb;
     border-radius: 4px;
-    line-height: 0.5;
+    /* line-height: 0.5; */
 }
 
 /* Table headers */
 table.pvtTable thead th {
     background-color: #f2f2f2;
-    color: #0b74de;
-    padding: 5px !important; 
+    /* color: #0b74de; */
+    color: black;
+    padding: 5px !important;
     font-size: 5pt;
-    text-align: left; 
+    text-align: left;
     border-bottom: 0px solid #d9dadb;
     border-top: 0px solid #d9dadb;
-   
+
 }
 
 /* Row headers */
 table.pvtTable tbody tr th {
     background-color: #f9fafb;
-    color: #0b74de;
+    color: black;
+    line-height: 0.04;
+    /* color: #0b74de; */
     /* padding: 5px;
     font-size: 4pt;
     text-align: left;
@@ -45,14 +48,31 @@ table.pvtTable tbody tr th {
 }
 
 /* Table cells */
+/* Table cells */
+/* START MODIFIED SECTION */
 table.pvtTable tbody tr td {
     padding: 0px;
-    border: 1px solid #d9dadb;
+    border: 0px solid #d9dadb;
     text-align: center;
     color: white;
+    /* Default, overridden by JS */
     background-color: #ffffff;
-    line-height: 0.2;
+    /* Default, overridden by JS */
+    /* line-height: 0.2; */
+    /* Original commented-out line */
+
+    /* New styles to force minimum area and prevent vertical scroll */
+    white-space: nowrap;
+    /* Prevents text wrapping, forcing horizontal scroll instead */
+    /* font-size: 1px; */
+    /* Makes text content vertically tiny */
+    /* line-height: 1; */
+    /* Matches line height to tiny font size */
+    /* min-width: 1px; */
+    /* Ensures even empty cells have some width */
 }
+
+/* END MODIFIED SECTION */
 
 /* Even row cells */
 table.pvtTable tbody tr:nth-child(even) td {
@@ -395,13 +415,13 @@ th.frezzThead {
     cursor: pointer;
 }
 
-.label{
+.label {
     color: black;
 }
 
-
- 
 .BlackFont {
-    color: black !important;
-    font-weight: bolder !important;
+    /* color: black !important; */
+    color: #0b74de !important;
+    /* font-weight: bolder !important;
+    font-size: large; */
 }

@@ -93,30 +93,51 @@ sap.ui.define([
             let aConfigs = this.byId("mcConfig").getSelectedKeys();
             let aProducts = this.byId("mcProduct").getSelectedKeys();
 
+            const aFilters = [];
+
             if (aYear.length === 0) return;
             if (aLocs.length === 0) return;
             if (aConfigs.length === 0) return;
             if (aProducts.length === 0) return;
+
+            if (aLocs.length) {
+                aFilters.push(new Filter(aLocs.map(loc => new Filter("LOCATION_ID", FilterOperator.EQ, loc)), false));
+            }
+            if (aConfigs.length) {
+                aFilters.push(new Filter(aConfigs.map(c => new Filter("CONFIG_PRODUCT", FilterOperator.EQ, c)), false));
+            }
+            if (aProducts.length) {
+                aFilters.push(new Filter(aProducts.map(p => new Filter("PRODUCT_ID", FilterOperator.EQ, p)), false));
+            }
+            if (aYear.length) {
+                aFilters.push(new Filter(aYear.map(p => new Filter("YEAR", FilterOperator.EQ, p)), false));
+            }
+
+            const filter = new Filter(aFilters, true);
 
 
             that.getView().setBusy(true);
 
 
             // let aFilters = aLocs.map(loc => new Filter("LOCATION_ID", FilterOperator.EQ, loc));
-            const filterData = {
-                "YEAR": aYear,
-                "LOCATION_ID": aLocs,
-                "CONFIG_PRODUCT": aConfigs,
-                "PRODUCT_ID": aProducts
-            };
-            const groupbyFields = ["LOCATION_ID", "CLUSTER_ID", "PRIMARY_ID", "CHAR_DESC"];
-            const measures = [
-                { field: "ORD_QTY", operation: "sum" }
-            ];
-            const applyQuery = that.makeApplyQuery(filterData, groupbyFields, measures);
+            // const filterData = {
+            //     "YEAR": aYear,
+            //     "LOCATION_ID": aLocs,
+            //     "CONFIG_PRODUCT": aConfigs,
+            //     "PRODUCT_ID": aProducts
+            // };
+            // const groupbyFields = ["LOCATION_ID", "CLUSTER_ID", "PRIMARY_ID", "CHAR_DESC", "YEAR", "PRODUCT_ID"];
+            // const measures = [
+            //     { field: "ORD_QTY", operation: "sum" }
+            // ];
+            // const applyQuery = that.makeApplyQuery(filterData, groupbyFields, measures);
             that.oModel.read("/getClusterHeatmap", {
-                // filters: [cobFilter], // OR within Location
-                urlParameters: { "$apply": applyQuery, "$top": 80000 },
+                filters: [filter],
+                // urlParameters: { "$apply": applyQuery + "/orderby(CLUSTER_ID)", "$top": 50000 },
+                urlParameters: {
+                    "$select": "CLUSTER_ID, PRIMARY_ID, CHAR_DESC",// Select only needed fields,
+                    "$top": 50000
+                },
                 success: function (oData) {
                     that.getView().setBusy(false);
 
@@ -125,24 +146,28 @@ sap.ui.define([
                     // CLUSTER_ID with "Select All"
                     let clusterId = [...new Set(oData.results.map(o => o.CLUSTER_ID).sort((a, b) => a - b))];
                     let oClusterModel = new JSONModel(clusterId.map(c => ({ key: c, text: c })));
-                    this.byId("mcCluster").setModel(oClusterModel);
-                    this.byId("mcCluster").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
+                    that.byId("mcCluster").setModel(oClusterModel);
+                    that.byId("mcCluster").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
 
                     let priId = [...new Set(oData.results.map(o => o.PRIMARY_ID).sort((a, b) => a - b))];
                     let priModle = new JSONModel(priId.map(c => ({ key: c, text: c })));
-                    this.byId("mcPrimary").setModel(priModle);
-                    this.byId("mcPrimary").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
+                    that.byId("mcPrimary").setModel(priModle);
+                    that.byId("mcPrimary").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
 
                     // CHAR_DESC
                     let charDesc = [...new Set(oData.results.map(o => o.CHAR_DESC))];
-                    this.byId("mcChar").setModel(new JSONModel(charDesc.map(c => ({ key: c, text: c }))));
-                    this.byId("mcChar").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
+                    that.byId("mcChar").setModel(new JSONModel(charDesc.map(c => ({ key: c, text: c }))));
+                    that.byId("mcChar").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
 
                     // let quar = [...new Set(oData.results.map(o => o.QUARTER))];
                     // this.byId("idQuar").setModel(new JSONModel(quar.map(c => ({ key: c, text: c }))));
                     // this.byId("idQuar").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
 
-                }.bind(this)
+                },
+                error: function (oError) {
+                    debugger
+                    console.error("Error fetching getClusterHeatmap:", oError);
+                }
             });
         },
         onChnageCluster() {
@@ -279,32 +304,54 @@ sap.ui.define([
                 success: function (oData) {
                     that.getView().setBusy(false)
                     let aData = oData.results;
+
+                    // Create base maps
                     that.myMap = new Map(aData.map(item => [item.CHARVAL_NUM, item]));
                     that.myMapCHAR = new Map(aData.map(item => [item.CHAR_DESC, item]));
                     that.myMapMore = new Map(aData.map(item => [`${item.CHARVAL_NUM}_${item.CHAR_DESC}`, item]));
+
                     const myMapPrId = new Map();
 
-                    aData.forEach(item => {
+                    // Group by PRIMARY_ID and find the item with max CHAR_SEQUENCE
+                    const grouped = aData.reduce((acc, item) => {
                         const key = item.PRIMARY_ID + "";
-                        if (myMapPrId.has(key)) {
-                            // Only sum ORD_QTY_SUM if CHAR_SEQUENCE === 16
-                            if (item.CHAR_SEQUENCE === 16) {
-                                myMapPrId.get(key).ORD_QTY_SUM = Number(myMapPrId.get(key).ORD_QTY_SUM) + Number(item.ORD_QTY_SUM);
-                            }
-                            // Else, do nothing (or handle as needed)
-                        } else {
-                            // Add a copy of the item
-                            myMapPrId.set(key, { ...item });
+                        if (!acc[key]) {
+                            acc[key] = [];
                         }
+                        acc[key].push(item);
+                        return acc;
+                    }, {});
+
+                    Object.entries(grouped).forEach(([key, items]) => {
+                        // Find the item with the maximum CHAR_SEQUENCE
+                        const maxSeqItem = items.reduce((max, curr) =>
+                            curr.CHAR_SEQUENCE > max.CHAR_SEQUENCE ? curr : max
+                        );
+
+                        // If there are multiple entries with the same PRIMARY_ID and CHAR_SEQUENCE max,
+                        // sum their ORD_QTY_SUM values.
+                        const totalQty = items
+                            .filter(i => i.CHAR_SEQUENCE === maxSeqItem.CHAR_SEQUENCE)
+                            .reduce((sum, i) => sum + Number(i.ORD_QTY_SUM || 0), 0);
+
+                        // Create entry in the map
+                        myMapPrId.set(key, { ...maxSeqItem, ORD_QTY_SUM: totalQty });
                     });
+
                     that.myMapPrId = myMapPrId;
-                    const ORD_QTY = []
+
+                    // Create derived array and unique order quantities
+                    const ORD_QTY = [];
                     aData.forEach(o => {
-                        o.PRIMARY_ID_ORDER = `${o.PRIMARY_ID}(${myMapPrId.get(o.PRIMARY_ID + "").ORD_QTY_SUM})`
-                        ORD_QTY.push(Number(myMapPrId.get(o.PRIMARY_ID + "").ORD_QTY_SUM))
+                        const key = o.PRIMARY_ID + "";
+                        const sumValue = myMapPrId.get(key).ORD_QTY_SUM;
+                        o.PRIMARY_ID_ORDER = `${o.PRIMARY_ID}(${sumValue})`;
+                        ORD_QTY.push(Number(sumValue));
                     });
+
                     let ordeQts = [...new Set(ORD_QTY)];
                     that.ordeQts = ordeQts;
+
                     const minPx = 3;   // smallest row height
                     const maxPx = 100;  // largest row height
 
@@ -474,6 +521,9 @@ sap.ui.define([
         },
         loadPivotTab(data) {
             // that.oGModel.setProperty("/showPivot", true);
+            if (that.byId("idPrp").getSelected()) {
+                data = data.filter(o => o.UNIQUE_ID_COLOR === 0);
+            }
             that.byId("toolBar").setVisible(true);
             var newDiv = document.createElement("div");
             newDiv.id = `pivotGrid`;
@@ -659,6 +709,12 @@ sap.ui.define([
                         }
 
                         // Apply freeze positioning to each row
+
+                        // const containerWidth = $('.mainDivClass').width();
+                        // const columnCount = maxThCount;
+                        // const maxColumnWidth = Math.floor(containerWidth / columnCount);
+
+                        // widths = widths.map(width => Math.min(width, maxColumnWidth));
                         tbody.find("tr").each(function () {
                             const thElements = $(this).find("th");
                             const currentThCount = thElements.length;
@@ -680,12 +736,15 @@ sap.ui.define([
                             const forstTh = $(this).find("th:first")[0].textContent;
 
                             const order_qty = Number(forstTh.split("(")[1].split(")")[0]);
-                            const minPx = 5;   // smallest row height
-                            const maxPx = 100;  // largest row height
+                            // const minPx = 2;   // smallest row height
+                            // const maxPx = 40;  // largest row height
+
+                            // const minPx = 1;   // smallest possible row height
+                            // const maxPx = 15;  // a much smaller max height
 
 
-                            const minVal = Math.min(...that.ordeQts);
-                            const maxVal = Math.max(...that.ordeQts);
+                            // const minVal = Math.min(...that.ordeQts);
+                            // const maxVal = Math.max(...that.ordeQts);
 
                             // const pId = forstTh.split('(')[0];\]
                             const PItem = that.myMapPrId.get(forstTh.split('(')[0]);
@@ -694,17 +753,21 @@ sap.ui.define([
                                 $(this).find('th:first').addClass('BlackFont')
                             }
 
+                            const lineHeight = Number(order_qty) * 0.01;
+
+                            $($(this).find('th:first')).css('line-height', lineHeight);
+                            $(this).find('td').css('line-height', lineHeight);
+
                             // normalize each value into px range
-                            const heights =
-                                ((order_qty - minVal) / (maxVal - minVal)) * (maxPx - minPx) + minPx;
-                            $(this).height(heights);
+                            // const heights =
+                            //     ((order_qty - minVal) / (maxVal - minVal)) * (maxPx - minPx) + minPx;
+                            // $(this).height(heights);
                         });
                     }
 
                     // Format number cells (remove decimals, replace empty cells with 0)
                     function formatCells() {
-                        const bPressed = that.byId("idTogglePOP").getPressed();
-                        const selectedItem = bPressed ? "Hide Char" : "Show Char";
+                        const bSelected = that.byId("idCharCheck").getSelected();
                         $(".pvtTable")
                             .find("td")
                             .each(function () {
@@ -716,33 +779,36 @@ sap.ui.define([
                                 }
                                 if (color) {
                                     $(this).css("background-color", color);
-                                    if (selectedItem !== "Show Char")
-                                        $(this).css("color", "#ffffff");
-                                    else
+                                    if (bSelected) {
+                                        // Checkbox is checked = Hide characteristics
                                         $(this).css("color", "transparent"); // Make text invisible
+                                    } else {
+                                        // Checkbox is unchecked = Show characteristics
+                                        $(this).css("color", "#ffffff");
+                                    }
                                 }
                                 $(this).addClass("hoverCell");
                                 const popoverHtml = `
-    <div class="popover">
-        <div class="popover-content">
-            <div class="date-row">
-                <span class="label">Primary ID: </span>
-                <span class="PrimaryId" style="color: blue;"></span>
-            </div>
-            <div class="date-row">
-                <span class="label">Cluster ID: </span>
-                <span class="ClusterId" style="color: blue;"></span>
-            </div>
-            <div class="date-row">
-                <span class="label">Char Val: </span>
-                <span class="CharValNum" style="color: blue;"></span>
-            </div>
-            <div class="date-row">
-                <span class="label">Order Qty: </span>
-                <span class="OrderQty" style="color: blue;"></span>
-            </div>
+   <div class="popover" id="globalPopover">
+    <div class="popover-content">
+        <div class="date-row">
+            <span class="label" style="font-size: 13px;">Primary ID: </span>
+            <span class="PrimaryId" style="color: blue; font-size: 14px;"></span>
         </div>
-    </div>`;
+        <div class="date-row">
+            <span class="label" style="font-size: 13px;">Cluster ID: </span>
+            <span class="ClusterId" style="color: blue; font-size: 14px;"></span>
+        </div>
+        <div class="date-row">
+            <span class="label" style="font-size: 13px;">Char Val: </span>
+            <span class="CharValNum" style="color: blue; font-size: 14px;"></span>
+        </div>
+        <div class="date-row">
+            <span class="label" style="font-size: 13px;">Order Qty: </span>
+            <span class="OrderQty" style="color: blue; font-size: 14px;"></span>
+        </div>
+    </div>
+</div>`
 
 
 
@@ -928,6 +994,33 @@ sap.ui.define([
 
 
         },
+        charHide: function (oEvent) {
+            const oCheckBox = oEvent.getSource();
+            const bSelected = oCheckBox.getSelected();
 
+            // Apply color changes based on checkbox state
+            $(".pvtTable")
+                .find("td")
+                .each(function () {
+                    let cellText = $(this)[0].childNodes[0].textContent.trim();
+                    const item = that.myMap.get(cellText);
+                    let color;
+                    if (item) {
+                        color = item.COLOR_CODE;
+                    }
+                    if (color) {
+                        $(this).css("background-color", color);
+                        if (bSelected) {
+                            // Checkbox is checked = Hide characteristics
+                            $(this).css("color", "transparent"); // Make text invisible
+                        } else {
+                            // Checkbox is unchecked = Show characteristics
+                            $(this).css("color", "#ffffff");
+                        }
+                    }
+                });
+        }, checkPrp() {
+            that.loadPivotTab(that.allData);
+        }
     });
 });
