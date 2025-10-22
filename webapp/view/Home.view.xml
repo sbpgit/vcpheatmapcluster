@@ -12,7 +12,7 @@
                 <fb:filterGroupItems>
                     <fb:FilterGroupItem name="Year" mandatory="true" label="Year" groupName="Group1" visibleInFilterBar="true">
                         <fb:control>
-                            <MultiComboBox id="mcYear" selectionFinish="onChnageYear">
+                            <MultiComboBox id="mcYear">
                             </MultiComboBox>
                         </fb:control>
                     </fb:FilterGroupItem>
@@ -29,9 +29,9 @@
                             <MultiComboBox id="mcConfig"/>
                         </fb:control>
                     </fb:FilterGroupItem>
-                    <fb:FilterGroupItem name="Product" label="Product" mandatory="true" groupName="Group1" visibleInFilterBar="true">
+                    <fb:FilterGroupItem name="Product" label="Product" mandatory="true"  groupName="Group1" visibleInFilterBar="true">
                         <fb:control>
-                            <MultiComboBox id="mcProduct" />
+                            <MultiComboBox id="mcProduct" selectionFinish="onchageProd" />
                         </fb:control>
                     </fb:FilterGroupItem>
                     <fb:FilterGroupItem name="Cluster" label="Cluster" groupName="Group1" visibleInFilterBar="true">
@@ -49,6 +49,11 @@
                     <fb:FilterGroupItem name="Characterist Descriptions" label="Characterist Descriptions" groupName="Group1" visibleInFilterBar="true">
                         <fb:control>
                             <MultiComboBox id="mcChar" showSelectAll="true" />
+                        </fb:control>
+                    </fb:FilterGroupItem>
+                    <fb:FilterGroupItem name="QUARTER" label="Quarter" groupName="Group1" visibleInFilterBar="true">
+                        <fb:control>
+                            <MultiComboBox id="idQuar" showSelectAll="true" />
                         </fb:control>
                     </fb:FilterGroupItem>
                 </fb:filterGroupItems>

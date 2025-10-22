@@ -13,77 +13,114 @@ sap.ui.define([
             that = this;
             that.oModel = that.getOwnerComponent().getModel("oModel");
             that.pivotPage = that.byId("idPivotPagePOP");
-            this._loadYear();
         },
-        onAfterRendering() {
+        async onAfterRendering() {
             that.byId("toolBar").setVisible(false);
+            await this._loadYear();
+            await this.loadAll();
         },
-        _loadYear: function () {
-            that.byId("mcYear").setBusy(true);
+        loadAll() {
+            return new Promise((resolve, reject) => {
+                that.oModel.read("/getfactorylocdesc", {
+                    urlParameters: {
+                        "$apply": "groupby((DEMAND_LOC,PRODUCT_ID,REF_PRODID))",
+                        "$top": 50000
+                    },
+                    success: function (oData) {
+                        that.getView().setBusy(false);
 
-            // Dedicated endpoint that returns only years
-            that.oModel.read("/getClusterHeatmap", {
-                urlParameters: {
-                    "$select": "YEAR",  // Only fetch YEAR column efkh
-                    "$apply": "groupby((YEAR))"
-                },
-                success: function (oData) {
-                    that.byId("mcYear").setBusy(false);
+                        that.facdata = oData.results;
 
-                    let years = oData.results.map(o => ({ key: o.YEAR, text: o.YEAR }));
-                    that.byId("mcYear").setModel(new JSONModel(years));
-                    that.byId("mcYear").bindItems("/", new sap.ui.core.Item({
-                        key: "{key}",
-                        text: "{text}"
-                    }));
-                },
-                error: function (e) {
-                    that.byId("mcYear").setBusy(false);
-                    console.log(e);
-                }
+                        // LOCATION_ID
+                        let uniqueLocs = [...new Set(oData.results.map(d => d.DEMAND_LOC))];
+                        let oModel = new JSONModel(uniqueLocs.map(l => ({ key: l, text: l })));
+                        that.byId("mcLocation").setModel(oModel);
+                        that.byId("mcLocation").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
+
+                        // CONFIG_PRODUCT
+                        let congifprod = [...new Set(oData.results.map(o => o.REF_PRODID))];
+                        let oConfigModel = new JSONModel(congifprod.map(c => ({ key: c, text: c })));
+                        that.byId("mcConfig").setModel(oConfigModel);
+                        that.byId("mcConfig").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
+
+                        // PRODUCT_ID
+                        let prodId = [...new Set(oData.results.map(o => o.PRODUCT_ID))];
+                        let oProdModel = new JSONModel(prodId.map(c => ({ key: c, text: c })));
+                        that.byId("mcProduct").setModel(oProdModel);
+                        that.byId("mcProduct").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
+
+                        resolve(oData.results);
+                    }.bind(this),
+                    error: function (err) {
+                        that.getView().setBusy(false);
+                        reject(err);
+                    }
+                });
             });
         },
-        onChnageYear: function () {
+        _loadYear: function () {
+            return new Promise((resolve, reject) => {
+                that.byId("mcYear").setBusy(true);
+
+                that.oModel.read("/getClusterHeatmap", {
+                    urlParameters: {
+                        "$select": "YEAR",
+                        "$apply": "groupby((YEAR))"
+                    },
+                    success: function (oData) {
+                        that.byId("mcYear").setBusy(false);
+
+                        let years = oData.results.map(o => ({ key: o.YEAR, text: o.YEAR }));
+                        that.byId("mcYear").setModel(new JSONModel(years));
+                        that.byId("mcYear").bindItems("/", new sap.ui.core.Item({
+                            key: "{key}",
+                            text: "{text}"
+                        }));
+
+                        resolve(oData.results);
+                    },
+                    error: function (e) {
+                        that.byId("mcYear").setBusy(false);
+                        console.log(e);
+                        reject(e);
+                    }
+                });
+            });
+        },
+        onchageProd: function () {
             let aYear = this.byId("mcYear").getSelectedKeys();
+            let aLocs = this.byId("mcLocation").getSelectedKeys();
+            let aConfigs = this.byId("mcConfig").getSelectedKeys();
+            let aProducts = this.byId("mcProduct").getSelectedKeys();
 
             if (aYear.length === 0) return;
+            if (aLocs.length === 0) return;
+            if (aConfigs.length === 0) return;
+            if (aProducts.length === 0) return;
+
 
             that.getView().setBusy(true);
 
 
             // let aFilters = aLocs.map(loc => new Filter("LOCATION_ID", FilterOperator.EQ, loc));
             const filterData = {
-                "YEAR": aYear
+                "YEAR": aYear,
+                "LOCATION_ID": aLocs,
+                "CONFIG_PRODUCT": aConfigs,
+                "PRODUCT_ID": aProducts
             };
-            const groupbyFields = ["LOCATION_ID", "CONFIG_PRODUCT", "PRODUCT_ID", "CLUSTER_ID", "PRIMARY_ID", "CHAR_DESC"];
+            const groupbyFields = ["LOCATION_ID", "CLUSTER_ID", "PRIMARY_ID", "CHAR_DESC", "QUARTER"];
             const measures = [
                 { field: "ORD_QTY", operation: "sum" }
             ];
             const applyQuery = that.makeApplyQuery(filterData, groupbyFields, measures);
             that.oModel.read("/getClusterHeatmap", {
-                // filters: [new Filter(aFilters, false)], // OR within Location
+                // filters: [cobFilter], // OR within Location
                 urlParameters: { "$apply": applyQuery, "$top": 80000 },
                 success: function (oData) {
                     that.getView().setBusy(false);
 
                     that.FilterData = oData.results;
-
-                    let uniqueLocs = [...new Set(oData.results.map(d => d.LOCATION_ID))];
-                    let oModel = new JSONModel(uniqueLocs.map(l => ({ key: l, text: l })));
-                    that.byId("mcLocation").setModel(oModel);
-                    that.byId("mcLocation").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
-
-                    // CONFIG_PRODUCT
-                    let congifprod = [...new Set(oData.results.map(o => o.CONFIG_PRODUCT))];
-                    let oConfigModel = new JSONModel(congifprod.map(c => ({ key: c, text: c })));
-                    this.byId("mcConfig").setModel(oConfigModel);
-                    this.byId("mcConfig").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
-
-                    // PRODUCT_ID
-                    let prodId = [...new Set(oData.results.map(o => o.PRODUCT_ID))];
-                    let oProdModel = new JSONModel(prodId.map(c => ({ key: c, text: c })));
-                    this.byId("mcProduct").setModel(oProdModel);
-                    this.byId("mcProduct").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
 
                     // CLUSTER_ID with "Select All"
                     let clusterId = [...new Set(oData.results.map(o => o.CLUSTER_ID).sort((a, b) => a - b))];
@@ -96,21 +133,21 @@ sap.ui.define([
                     this.byId("mcPrimary").setModel(priModle);
                     this.byId("mcPrimary").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
 
-                    // YEAR
-                    // let Year = [...new Set(oData.results.map(o => o.YEAR))];
-                    // this.byId("mcYear").setModel(new JSONModel(Year.map(c => ({ key: c, text: c }))));
-                    // this.byId("mcYear").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
-
                     // CHAR_DESC
                     let charDesc = [...new Set(oData.results.map(o => o.CHAR_DESC))];
                     this.byId("mcChar").setModel(new JSONModel(charDesc.map(c => ({ key: c, text: c }))));
                     this.byId("mcChar").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
+
+                    let quar = [...new Set(oData.results.map(o => o.QUARTER))];
+                    this.byId("idQuar").setModel(new JSONModel(quar.map(c => ({ key: c, text: c }))));
+                    this.byId("idQuar").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
 
                 }.bind(this)
             });
         },
         onChnageCluster() {
             const clus = this.byId("mcCluster").getSelectedKeys().map(c => Number(c));
+            if (!clus.length) return;
             let aLocs = this.byId("mcLocation").getSelectedKeys();
             let fData = [];
             if (clus.length === 0)
@@ -125,11 +162,13 @@ sap.ui.define([
             let charDesc = [...new Set(fData.map(o => o.CHAR_DESC))];
             this.byId("mcChar").setModel(new JSONModel(charDesc.map(c => ({ key: c, text: c }))));
             this.byId("mcChar").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
+
+
         },
         onLocationSelect() {
             let aLocs = this.byId("mcLocation").getSelectedKeys();
-            const fData = that.FilterData.filter(o => aLocs.includes(o.LOCATION_ID))
-            let congifprod = [...new Set(fData.map(o => o.CONFIG_PRODUCT))];
+            const fData = that.facdata.filter(o => aLocs.includes(o.DEMAND_LOC))
+            let congifprod = [...new Set(fData.map(o => o.REF_PRODID))];
             let oConfigModel = new JSONModel(congifprod.map(c => ({ key: c, text: c })));
             this.byId("mcConfig").setModel(oConfigModel);
             this.byId("mcConfig").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
@@ -140,26 +179,26 @@ sap.ui.define([
             this.byId("mcProduct").setModel(oProdModel);
             this.byId("mcProduct").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
 
-            // CLUSTER_ID with "Select All"
-            let clusterId = [...new Set(fData.map(o => o.CLUSTER_ID).sort((a, b) => a - b))];
-            let oClusterModel = new JSONModel(clusterId.map(c => ({ key: c, text: c })));
-            this.byId("mcCluster").setModel(oClusterModel);
-            this.byId("mcCluster").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
+            // // CLUSTER_ID with "Select All"
+            // let clusterId = [...new Set(fData.map(o => o.CLUSTER_ID).sort((a, b) => a - b))];
+            // let oClusterModel = new JSONModel(clusterId.map(c => ({ key: c, text: c })));
+            // this.byId("mcCluster").setModel(oClusterModel);
+            // this.byId("mcCluster").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
 
-            let priId = [...new Set(fData.map(o => o.PRIMARY_ID).sort((a, b) => a - b))];
-            let priModle = new JSONModel(priId.map(c => ({ key: c, text: c })));
-            this.byId("mcPrimary").setModel(priModle);
-            this.byId("mcPrimary").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
+            // let priId = [...new Set(fData.map(o => o.PRIMARY_ID).sort((a, b) => a - b))];
+            // let priModle = new JSONModel(priId.map(c => ({ key: c, text: c })));
+            // this.byId("mcPrimary").setModel(priModle);
+            // this.byId("mcPrimary").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
 
             // YEAR
             // let Year = [...new Set(fData.map(o => o.YEAR))];
             // this.byId("mcYear").setModel(new JSONModel(Year.map(c => ({ key: c, text: c }))));
             // this.byId("mcYear").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
 
-            // CHAR_DESC
-            let charDesc = [...new Set(fData.map(o => o.CHAR_DESC))];
-            this.byId("mcChar").setModel(new JSONModel(charDesc.map(c => ({ key: c, text: c }))));
-            this.byId("mcChar").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
+            // // CHAR_DESC
+            // let charDesc = [...new Set(fData.map(o => o.CHAR_DESC))];
+            // this.byId("mcChar").setModel(new JSONModel(charDesc.map(c => ({ key: c, text: c }))));
+            // this.byId("mcChar").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
         },
         onApplyFilters: function () {
             let aLocs = this.byId("mcLocation").getSelectedKeys();
@@ -169,6 +208,7 @@ sap.ui.define([
             let aPriMary = this.byId("mcPrimary").getSelectedKeys();
             let aYear = this.byId("mcYear").getSelectedKeys();
             let aChar = this.byId("mcChar").getSelectedKeys();
+            let quar = this.byId("idQuar").getSelectedKeys();
 
             let aFilters = [];
 
@@ -179,27 +219,30 @@ sap.ui.define([
 
 
 
-            if (aLocs.length) {
-                aFilters.push(new Filter(aLocs.map(loc => new Filter("LOCATION_ID", FilterOperator.EQ, loc)), false));
-            }
-            if (aConfigs.length) {
-                aFilters.push(new Filter(aConfigs.map(c => new Filter("CONFIG_PRODUCT", FilterOperator.EQ, c)), false));
-            }
-            if (aProducts.length) {
-                aFilters.push(new Filter(aProducts.map(p => new Filter("PRODUCT_ID", FilterOperator.EQ, p)), false));
-            }
+            // if (aLocs.length) {
+            //     aFilters.push(new Filter(aLocs.map(loc => new Filter("LOCATION_ID", FilterOperator.EQ, loc)), false));
+            // }
+            // if (aConfigs.length) {
+            //     aFilters.push(new Filter(aConfigs.map(c => new Filter("CONFIG_PRODUCT", FilterOperator.EQ, c)), false));
+            // }
+            // if (aProducts.length) {
+            //     aFilters.push(new Filter(aProducts.map(p => new Filter("PRODUCT_ID", FilterOperator.EQ, p)), false));
+            // }
 
-            if (aClusters.length) {
-                aFilters.push(new Filter(aClusters.map(clu => new Filter("CLUSTER_ID", FilterOperator.EQ, clu)), false));
-            }
+            // if (aClusters.length) {
+            //     aFilters.push(new Filter(aClusters.map(clu => new Filter("CLUSTER_ID", FilterOperator.EQ, clu)), false));
+            // }
 
-            if (aYear.length) {
-                aFilters.push(new Filter(aYear.map(y => new Filter("YEAR", FilterOperator.EQ, y)), false));
-            }
+            // if (aYear.length) {
+            //     aFilters.push(new Filter(aYear.map(y => new Filter("YEAR", FilterOperator.EQ, y)), false));
+            // }
 
-            if (aChar.length) {
-                aFilters.push(new Filter(aChar.map(a => new Filter("CHAR_DESC", FilterOperator.EQ, a)), false));
-            }
+            // if (aChar.length) {
+            //     aFilters.push(new Filter(aChar.map(a => new Filter("CHAR_DESC", FilterOperator.EQ, a)), false));
+            // }
+            //  if (quar.length) {
+            //     aFilters.push(new Filter(quar.map(a => new Filter("QUARTER", FilterOperator.EQ, a)), false));
+            // }
 
             const filterData = {
                 "LOCATION_ID": aLocs,         // array of selected locations
@@ -207,8 +250,9 @@ sap.ui.define([
                 "PRODUCT_ID": aProducts,      // array of selected products
                 "CLUSTER_ID": aClusters.map(c => Number(c)),      // array of selected clusters
                 "PRIMARY_ID": aPriMary.map(c => Number(c)),
-                "YEAR": aYear.length ? aYear : ["2022"],   // if no year selected, default to 2022
-                "CHAR_DESC": aChar            // array of selected characteristics
+                "YEAR": aYear,
+                "CHAR_DESC": aChar,            // array of selected characteristics
+                "QUARTER": quar
             };
             const groupbyFields = [
                 "CLUSTER_ID",
