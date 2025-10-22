@@ -16,7 +16,7 @@ sap.ui.define([
         },
         async onAfterRendering() {
             that.byId("toolBar").setVisible(false);
-            await this._loadYear();
+            // await this._loadYear();
             await this.loadAll();
         },
         loadAll() {
@@ -62,40 +62,60 @@ sap.ui.define([
             return new Promise((resolve, reject) => {
                 that.byId("mcYear").setBusy(true);
 
-                that.oModel.read("/getClusterHeatmap", {
-                    urlParameters: {
-                        "$select": "YEAR",
-                        "$apply": "groupby((YEAR))"
-                    },
-                    success: function (oData) {
-                        that.byId("mcYear").setBusy(false);
+                let allResults = [];
+                let skip = 0;
+                const top = 50000;
 
-                        let years = oData.results.map(o => ({ key: o.YEAR, text: o.YEAR }));
-                        that.byId("mcYear").setModel(new JSONModel(years));
-                        that.byId("mcYear").bindItems("/", new sap.ui.core.Item({
-                            key: "{key}",
-                            text: "{text}"
-                        }));
+                const fetchData = () => {
+                    that.oModel.read("/getClusterHeatmap", {
+                        urlParameters: {
+                            "$select": "YEAR",
+                            "$top": top,
+                            "$skip": skip
+                        },
+                        success: function (oData) {
+                            allResults = allResults.concat(oData.results);
 
-                        resolve(oData.results);
-                    },
-                    error: function (e) {
-                        that.byId("mcYear").setBusy(false);
-                        console.log(e);
-                        reject(e);
-                    }
-                });
+                            // If we got exactly 50000 records, there might be more
+                            if (oData.results.length === top) {
+                                skip += top;
+                                fetchData(); // Recursively fetch next batch
+                            } else {
+                                // We've got all the data
+                                that.byId("mcYear").setBusy(false);
+
+                                let uniqueYears = [...new Set(allResults.map(o => o.YEAR))];
+                                let years = uniqueYears.map(y => ({ key: y, text: y }));
+
+                                that.byId("mcYear").setModel(new JSONModel(years));
+                                that.byId("mcYear").bindItems("/", new sap.ui.core.Item({
+                                    key: "{key}",
+                                    text: "{text}"
+                                }));
+
+                                resolve(allResults);
+                            }
+                        },
+                        error: function (e) {
+                            that.byId("mcYear").setBusy(false);
+                            console.log(e);
+                            reject(e);
+                        }
+                    });
+                };
+
+                fetchData(); // Start the first fetch
             });
         },
         onchageProd: function () {
-            let aYear = this.byId("mcYear").getSelectedKeys();
+            // let aYear = this.byId("mcYear").getSelectedKeys();
             let aLocs = this.byId("mcLocation").getSelectedKeys();
             let aConfigs = this.byId("mcConfig").getSelectedKeys();
             let aProducts = this.byId("mcProduct").getSelectedKeys();
 
             const aFilters = [];
 
-            if (aYear.length === 0) return;
+            // if (aYear.length === 0) return;
             if (aLocs.length === 0) return;
             if (aConfigs.length === 0) return;
             if (aProducts.length === 0) return;
@@ -109,9 +129,9 @@ sap.ui.define([
             if (aProducts.length) {
                 aFilters.push(new Filter(aProducts.map(p => new Filter("PRODUCT_ID", FilterOperator.EQ, p)), false));
             }
-            if (aYear.length) {
-                aFilters.push(new Filter(aYear.map(p => new Filter("YEAR", FilterOperator.EQ, p)), false));
-            }
+            // if (aYear.length) {
+            //     aFilters.push(new Filter(aYear.map(p => new Filter("YEAR", FilterOperator.EQ, p)), false));
+            // }
 
             const filter = new Filter(aFilters, true);
 
@@ -231,13 +251,13 @@ sap.ui.define([
             let aProducts = this.byId("mcProduct").getSelectedKeys();
             let aClusters = this.byId("mcCluster").getSelectedKeys();
             let aPriMary = this.byId("mcPrimary").getSelectedKeys();
-            let aYear = this.byId("mcYear").getSelectedKeys();
+            // let aYear = this.byId("mcYear").getSelectedKeys();
             let aChar = this.byId("mcChar").getSelectedKeys();
             // let quar = this.byId("idQuar").getSelectedKeys();
 
             let aFilters = [];
 
-            if (!aLocs.length || !aYear.length || !aConfigs.length || !aProducts.length)
+            if (!aLocs.length || !aConfigs.length || !aProducts.length)
                 return MessageToast.show("Please Select Mandatory Field")
 
             that.getView().setBusy(true)
@@ -275,7 +295,7 @@ sap.ui.define([
                 "PRODUCT_ID": aProducts,      // array of selected products
                 "CLUSTER_ID": aClusters.map(c => Number(c)),      // array of selected clusters
                 "PRIMARY_ID": aPriMary.map(c => Number(c)),
-                "YEAR": aYear,
+                // "YEAR": aYear,
                 "CHAR_DESC": aChar
             };
             const groupbyFields = [
@@ -753,7 +773,7 @@ sap.ui.define([
                                 $(this).find('th:first').addClass('BlackFont')
                             }
 
-                            const lineHeight = Number(order_qty) * 0.01;
+                            const lineHeight = Number(order_qty) * 0.001;
 
                             $($(this).find('th:first')).css('line-height', lineHeight);
                             $(this).find('td').css('line-height', lineHeight);

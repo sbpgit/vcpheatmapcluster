@@ -15,12 +15,12 @@
             <f:DynamicPageHeader pinnable="true">
                 <fb:FilterBar id="filterbar" persistencyKey="myPersKey" useToolbar="false" search="onApplyFilters">
                     <fb:filterGroupItems>
-                        <fb:FilterGroupItem name="Year" mandatory="true" label="Year" groupName="Group1" visibleInFilterBar="true">
+                        <!-- <fb:FilterGroupItem name="Year" mandatory="true" label="Year" groupName="Group1" visibleInFilterBar="true">
                             <fb:control>
                                 <MultiComboBox id="mcYear">
                                 </MultiComboBox>
                             </fb:control>
-                        </fb:FilterGroupItem>
+                        </fb:FilterGroupItem> -->
                         <fb:FilterGroupItem name="Location" mandatory="true" label="Location" groupName="Group1" visibleInFilterBar="true">
                             <fb:control>
                                 <MultiComboBox id="mcLocation" selectionChange=".onLocationSelect">
