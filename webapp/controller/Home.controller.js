@@ -109,7 +109,7 @@ sap.ui.define([
                 "CONFIG_PRODUCT": aConfigs,
                 "PRODUCT_ID": aProducts
             };
-            const groupbyFields = ["LOCATION_ID", "CLUSTER_ID", "PRIMARY_ID", "CHAR_DESC", "QUARTER"];
+            const groupbyFields = ["LOCATION_ID", "CLUSTER_ID", "PRIMARY_ID", "CHAR_DESC"];
             const measures = [
                 { field: "ORD_QTY", operation: "sum" }
             ];
@@ -138,9 +138,9 @@ sap.ui.define([
                     this.byId("mcChar").setModel(new JSONModel(charDesc.map(c => ({ key: c, text: c }))));
                     this.byId("mcChar").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
 
-                    let quar = [...new Set(oData.results.map(o => o.QUARTER))];
-                    this.byId("idQuar").setModel(new JSONModel(quar.map(c => ({ key: c, text: c }))));
-                    this.byId("idQuar").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
+                    // let quar = [...new Set(oData.results.map(o => o.QUARTER))];
+                    // this.byId("idQuar").setModel(new JSONModel(quar.map(c => ({ key: c, text: c }))));
+                    // this.byId("idQuar").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
 
                 }.bind(this)
             });
@@ -208,7 +208,7 @@ sap.ui.define([
             let aPriMary = this.byId("mcPrimary").getSelectedKeys();
             let aYear = this.byId("mcYear").getSelectedKeys();
             let aChar = this.byId("mcChar").getSelectedKeys();
-            let quar = this.byId("idQuar").getSelectedKeys();
+            // let quar = this.byId("idQuar").getSelectedKeys();
 
             let aFilters = [];
 
@@ -251,8 +251,7 @@ sap.ui.define([
                 "CLUSTER_ID": aClusters.map(c => Number(c)),      // array of selected clusters
                 "PRIMARY_ID": aPriMary.map(c => Number(c)),
                 "YEAR": aYear,
-                "CHAR_DESC": aChar,            // array of selected characteristics
-                "QUARTER": quar
+                "CHAR_DESC": aChar
             };
             const groupbyFields = [
                 "CLUSTER_ID",

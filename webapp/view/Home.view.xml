@@ -51,11 +51,11 @@
                             <MultiComboBox id="mcChar" showSelectAll="true" />
                         </fb:control>
                     </fb:FilterGroupItem>
-                    <fb:FilterGroupItem name="QUARTER" label="Quarter" groupName="Group1" visibleInFilterBar="true">
+                    <!-- <fb:FilterGroupItem name="QUARTER" label="Quarter" groupName="Group1" visibleInFilterBar="true">
                         <fb:control>
                             <MultiComboBox id="idQuar" showSelectAll="true" />
                         </fb:control>
-                    </fb:FilterGroupItem>
+                    </fb:FilterGroupItem> -->
                 </fb:filterGroupItems>
             </fb:FilterBar>
             <VBox id="idPivotPagePOP" busyIndicatorDelay="0">
