@@ -109,31 +109,31 @@ sap.ui.define([
         },
         onchageProd: function () {
             // let aYear = this.byId("mcYear").getSelectedKeys();
-            let aLocs = this.byId("mcLocation").getSelectedKeys();
-            let aConfigs = this.byId("mcConfig").getSelectedKeys();
-            let aProducts = this.byId("mcProduct").getSelectedKeys();
+            let aLocs = this.byId("mcLocation").getSelectedKey();
+            let aConfigs = this.byId("mcConfig").getSelectedKey();
+            let aProducts = this.byId("mcProduct").getSelectedKey();
 
-            const aFilters = [];
+            // const aFilters = [];
 
             // if (aYear.length === 0) return;
-            if (aLocs.length === 0) return;
-            if (aConfigs.length === 0) return;
-            if (aProducts.length === 0) return;
+            if (!aLocs) return;
+            if (!aConfigs) return;
+            if (!aProducts) return;
 
-            if (aLocs.length) {
-                aFilters.push(new Filter(aLocs.map(loc => new Filter("LOCATION_ID", FilterOperator.EQ, loc)), false));
-            }
-            if (aConfigs.length) {
-                aFilters.push(new Filter(aConfigs.map(c => new Filter("CONFIG_PRODUCT", FilterOperator.EQ, c)), false));
-            }
-            if (aProducts.length) {
-                aFilters.push(new Filter(aProducts.map(p => new Filter("PRODUCT_ID", FilterOperator.EQ, p)), false));
-            }
+            // if (aLocs) {
+            //     aFilters.push(new Filter("LOCATION_ID", FilterOperator.EQ, aLocs));
+            // }
+            // if (aConfigs) {
+            //     aFilters.push(new Filter("CONFIG_PRODUCT", FilterOperator.EQ, aConfigs));
+            // }
+            // if (aProducts) {
+            //     aFilters.push(new Filter("PRODUCT_ID", FilterOperator.EQ, aProducts));
+            // }
             // if (aYear.length) {
             //     aFilters.push(new Filter(aYear.map(p => new Filter("YEAR", FilterOperator.EQ, p)), false));
             // }
 
-            const filter = new Filter(aFilters, true);
+            // const filter = new Filter(aFilters, true);
 
 
             that.getView().setBusy(true);
@@ -151,31 +151,39 @@ sap.ui.define([
             //     { field: "ORD_QTY", operation: "sum" }
             // ];
             // const applyQuery = that.makeApplyQuery(filterData, groupbyFields, measures);
-            that.oModel.read("/getClusterHeatmap", {
-                filters: [filter],
+            that.oModel.callFunction("/getClusterFilter", {
+                // filters: [filter],
                 // urlParameters: { "$apply": applyQuery + "/orderby(CLUSTER_ID)", "$top": 50000 },
                 urlParameters: {
-                    "$select": "CLUSTER_ID, PRIMARY_ID, CHAR_DESC",// Select only needed fields,
-                    "$top": 50000
+                    // "$select": "CLUSTER_ID, PRIMARY_ID, CHAR_DESC",// Select only needed fields,
+                    // "$top": 50000
+                    loc: aLocs,
+                    cProd: aConfigs,
+                    prod: aProducts
                 },
                 success: function (oData) {
                     that.getView().setBusy(false);
 
-                    that.FilterData = oData.results;
+                    that.FilterData = JSON.parse(oData.getClusterFilter);
+                    const data = JSON.parse(oData.getClusterFilter);
+
+                    let year = [...new Set(data.map(o => o.YEAR))];
+                    that.byId("mcYear").setModel(new JSONModel(year.map(c => ({ key: c, text: c }))));
+                    that.byId("mcYear").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
 
                     // CLUSTER_ID with "Select All"
-                    let clusterId = [...new Set(oData.results.map(o => o.CLUSTER_ID).sort((a, b) => a - b))];
+                    let clusterId = [...new Set(data.map(o => o.CLUSTER_ID).sort((a, b) => a - b))];
                     let oClusterModel = new JSONModel(clusterId.map(c => ({ key: c, text: c })));
                     that.byId("mcCluster").setModel(oClusterModel);
                     that.byId("mcCluster").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
 
-                    let priId = [...new Set(oData.results.map(o => o.PRIMARY_ID).sort((a, b) => a - b))];
+                    let priId = [...new Set(data.map(o => o.PRIMARY_ID).sort((a, b) => a - b))];
                     let priModle = new JSONModel(priId.map(c => ({ key: c, text: c })));
                     that.byId("mcPrimary").setModel(priModle);
                     that.byId("mcPrimary").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
 
                     // CHAR_DESC
-                    let charDesc = [...new Set(oData.results.map(o => o.CHAR_DESC))];
+                    let charDesc = [...new Set(data.map(o => o.CHAR_DESC))];
                     that.byId("mcChar").setModel(new JSONModel(charDesc.map(c => ({ key: c, text: c }))));
                     that.byId("mcChar").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
 
@@ -185,20 +193,26 @@ sap.ui.define([
 
                 },
                 error: function (oError) {
-                    debugger
                     console.error("Error fetching getClusterHeatmap:", oError);
                 }
             });
         },
-        onChnageCluster() {
-            const clus = this.byId("mcCluster").getSelectedKeys().map(c => Number(c));
-            if (!clus.length) return;
-            let aLocs = this.byId("mcLocation").getSelectedKeys();
+        onchangeyear() {
+            const year = this.byId("mcYear").getSelectedKeys();
+            if (!year.length) return;
+            // let aLocs = this.byId("mcLocation").getSelectedKey();
             let fData = [];
-            if (clus.length === 0)
-                fData = that.FilterData.filter(o => aLocs.includes(o.LOCATION_ID))
-            else
-                fData = that.FilterData.filter(o => clus.includes(o.CLUSTER_ID) && aLocs.includes(o.LOCATION_ID))
+            // if (clus.length === 0)
+            //     fData = that.FilterData.filter(o => aLocs === o.LOCATION_ID)
+            // else
+            fData = that.FilterData.filter(o => year.includes(o.YEAR))
+
+            //cluter
+            let clue = [...new Set(fData.map(o => o.CLUSTER_ID).sort((a, b) => a - b))];
+            let clModle = new JSONModel(clue.map(c => ({ key: c, text: c })));
+            this.byId("mcCluster").setModel(clModle);
+            this.byId("mcCluster").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
+
             let priId = [...new Set(fData.map(o => o.PRIMARY_ID).sort((a, b) => a - b))];
             let priModle = new JSONModel(priId.map(c => ({ key: c, text: c })));
             this.byId("mcPrimary").setModel(priModle);
@@ -207,12 +221,28 @@ sap.ui.define([
             let charDesc = [...new Set(fData.map(o => o.CHAR_DESC))];
             this.byId("mcChar").setModel(new JSONModel(charDesc.map(c => ({ key: c, text: c }))));
             this.byId("mcChar").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
-
-
+        },
+        onChnageCluster() {
+            const clus = this.byId("mcCluster").getSelectedKeys().map(c => Number(c));
+            if (!clus.length) return;
+            // let aLocs = this.byId("mcLocation").getSelectedKey();
+            let fData = [];
+            // if (clus.length === 0)
+            //     // fData = that.FilterData.filter(o => aLocs === o.LOCATION_ID)
+            // else
+            fData = that.FilterData.filter(o => clus.includes(o.CLUSTER_ID) && aLocs === o.LOCATION_ID)
+            let priId = [...new Set(fData.map(o => o.PRIMARY_ID).sort((a, b) => a - b))];
+            let priModle = new JSONModel(priId.map(c => ({ key: c, text: c })));
+            this.byId("mcPrimary").setModel(priModle);
+            this.byId("mcPrimary").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
+            // CHAR_DESC
+            let charDesc = [...new Set(fData.map(o => o.CHAR_DESC))];
+            this.byId("mcChar").setModel(new JSONModel(charDesc.map(c => ({ key: c, text: c }))));
+            this.byId("mcChar").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
         },
         onLocationSelect() {
-            let aLocs = this.byId("mcLocation").getSelectedKeys();
-            const fData = that.facdata.filter(o => aLocs.includes(o.DEMAND_LOC))
+            let aLocs = this.byId("mcLocation").getSelectedKey();
+            const fData = that.facdata.filter(o => aLocs === o.DEMAND_LOC)
             let congifprod = [...new Set(fData.map(o => o.REF_PRODID))];
             let oConfigModel = new JSONModel(congifprod.map(c => ({ key: c, text: c })));
             this.byId("mcConfig").setModel(oConfigModel);
@@ -245,156 +275,180 @@ sap.ui.define([
             // this.byId("mcChar").setModel(new JSONModel(charDesc.map(c => ({ key: c, text: c }))));
             // this.byId("mcChar").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
         },
-        onApplyFilters: function () {
-            let aLocs = this.byId("mcLocation").getSelectedKeys();
-            let aConfigs = this.byId("mcConfig").getSelectedKeys();
-            let aProducts = this.byId("mcProduct").getSelectedKeys();
-            let aClusters = this.byId("mcCluster").getSelectedKeys();
-            let aPriMary = this.byId("mcPrimary").getSelectedKeys();
-            // let aYear = this.byId("mcYear").getSelectedKeys();
-            let aChar = this.byId("mcChar").getSelectedKeys();
-            // let quar = this.byId("idQuar").getSelectedKeys();
+        onApplyFilters: async function () {
+            try {
+                let aLocs = this.byId("mcLocation").getSelectedKey();
+                let aConfigs = this.byId("mcConfig").getSelectedKey();
+                let aProducts = this.byId("mcProduct").getSelectedKey();
+                let aClusters = this.byId("mcCluster").getSelectedKeys();
+                let aPriMary = this.byId("mcPrimary").getSelectedKeys();
+                let aYear = this.byId("mcYear").getSelectedKeys();
+                let aChar = this.byId("mcChar").getSelectedKeys();
+                // let quar = this.byId("idQuar").getSelectedKeys();
 
-            let aFilters = [];
+                let aFilters = [];
 
-            if (!aLocs.length || !aConfigs.length || !aProducts.length)
-                return MessageToast.show("Please Select Mandatory Field")
+                if (!aLocs || !aConfigs || !aProducts)
+                    return MessageToast.show("Please Select Mandatory Field")
 
-            that.getView().setBusy(true)
+                that.getView().setBusy(true)
 
 
 
-            // if (aLocs.length) {
-            //     aFilters.push(new Filter(aLocs.map(loc => new Filter("LOCATION_ID", FilterOperator.EQ, loc)), false));
-            // }
-            // if (aConfigs.length) {
-            //     aFilters.push(new Filter(aConfigs.map(c => new Filter("CONFIG_PRODUCT", FilterOperator.EQ, c)), false));
-            // }
-            // if (aProducts.length) {
-            //     aFilters.push(new Filter(aProducts.map(p => new Filter("PRODUCT_ID", FilterOperator.EQ, p)), false));
-            // }
-
-            // if (aClusters.length) {
-            //     aFilters.push(new Filter(aClusters.map(clu => new Filter("CLUSTER_ID", FilterOperator.EQ, clu)), false));
-            // }
-
-            // if (aYear.length) {
-            //     aFilters.push(new Filter(aYear.map(y => new Filter("YEAR", FilterOperator.EQ, y)), false));
-            // }
-
-            // if (aChar.length) {
-            //     aFilters.push(new Filter(aChar.map(a => new Filter("CHAR_DESC", FilterOperator.EQ, a)), false));
-            // }
-            //  if (quar.length) {
-            //     aFilters.push(new Filter(quar.map(a => new Filter("QUARTER", FilterOperator.EQ, a)), false));
-            // }
-
-            const filterData = {
-                "LOCATION_ID": aLocs,         // array of selected locations
-                "CONFIG_PRODUCT": aConfigs,   // array of selected configurations
-                "PRODUCT_ID": aProducts,      // array of selected products
-                "CLUSTER_ID": aClusters.map(c => Number(c)),      // array of selected clusters
-                "PRIMARY_ID": aPriMary.map(c => Number(c)),
-                // "YEAR": aYear,
-                "CHAR_DESC": aChar
-            };
-            const groupbyFields = [
-                "CLUSTER_ID",
-                "CLUSTER_SORT_SEQ",
-                "PRIMARY_ID_SEQUENCE",
-                "PRIMARY_ID",
-                "CHAR_NUM",
-                "CHAR_DESC",
-                "CHARVAL_NUM",
-                "CHAR_SEQUENCE",
-                "COLOR_CODE",
-                "YEAR",
-                "UNIQUE_ID_COLOR"
-            ];
-            const measures = [
-                { field: "ORD_QTY", operation: "sum" }
-            ];
-            const applyQuery = that.makeApplyQuery(filterData, groupbyFields, measures);
-
-            that.oModel.read("/getClusterHeatmap", {
-                urlParameters: {
-                    "$apply": applyQuery + "/orderby(CLUSTER_SORT_SEQ,PRIMARY_ID_SEQUENCE)",
-                    "$top": 50000
-                },
-                success: function (oData) {
-                    that.getView().setBusy(false)
-                    let aData = oData.results;
-
-                    // Create base maps
-                    that.myMap = new Map(aData.map(item => [item.CHARVAL_NUM, item]));
-                    that.myMapCHAR = new Map(aData.map(item => [item.CHAR_DESC, item]));
-                    that.myMapMore = new Map(aData.map(item => [`${item.CHARVAL_NUM}_${item.CHAR_DESC}`, item]));
-
-                    const myMapPrId = new Map();
-
-                    // Group by PRIMARY_ID and find the item with max CHAR_SEQUENCE
-                    const grouped = aData.reduce((acc, item) => {
-                        const key = item.PRIMARY_ID + "";
-                        if (!acc[key]) {
-                            acc[key] = [];
-                        }
-                        acc[key].push(item);
-                        return acc;
-                    }, {});
-
-                    Object.entries(grouped).forEach(([key, items]) => {
-                        // Find the item with the maximum CHAR_SEQUENCE
-                        const maxSeqItem = items.reduce((max, curr) =>
-                            curr.CHAR_SEQUENCE > max.CHAR_SEQUENCE ? curr : max
-                        );
-
-                        // If there are multiple entries with the same PRIMARY_ID and CHAR_SEQUENCE max,
-                        // sum their ORD_QTY_SUM values.
-                        const totalQty = items
-                            .filter(i => i.CHAR_SEQUENCE === maxSeqItem.CHAR_SEQUENCE)
-                            .reduce((sum, i) => sum + Number(i.ORD_QTY_SUM || 0), 0);
-
-                        // Create entry in the map
-                        myMapPrId.set(key, { ...maxSeqItem, ORD_QTY_SUM: totalQty });
-                    });
-
-                    that.myMapPrId = myMapPrId;
-
-                    // Create derived array and unique order quantities
-                    const ORD_QTY = [];
-                    aData.forEach(o => {
-                        const key = o.PRIMARY_ID + "";
-                        const sumValue = myMapPrId.get(key).ORD_QTY_SUM;
-                        o.PRIMARY_ID_ORDER = `${o.PRIMARY_ID}(${sumValue})`;
-                        ORD_QTY.push(Number(sumValue));
-                    });
-
-                    let ordeQts = [...new Set(ORD_QTY)];
-                    that.ordeQts = ordeQts;
-
-                    const minPx = 3;   // smallest row height
-                    const maxPx = 100;  // largest row height
-
-                    // find min & max in your data
-                    // const minVal = Math.min(...ordeQts);
-                    // const maxVal = Math.max(...ordeQts);
-
-                    // // normalize each value into px range
-                    // const heights = ordeQts.map(v => {
-                    //     return ((v - minVal) / (maxVal - minVal)) * (maxPx - minPx) + minPx;
-                    // });
-                    // // aData.sort((a, b) => {
-                    // //     return b.CLUSTER_SORT_SEQ - a.CLUSTER_SORT_SEQ;
-                    // // });
-                    // that.heights = heights;
-
-                    that.allData = aData;
-                    that.loadPivotTab(aData);
-                }.bind(this),
-                error: function (oError) {
-                    console.error("Error fetching getClusterHeatmap:", oError);
+                if (aLocs) {
+                    aFilters.push(new Filter("LOCATION_ID", FilterOperator.EQ, aLocs));
                 }
-            });
+                if (aConfigs) {
+                    aFilters.push(new Filter("CONFIG_PRODUCT", FilterOperator.EQ, aConfigs));
+                }
+                if (aProducts) {
+                    aFilters.push(new Filter("PRODUCT_ID", FilterOperator.EQ, aProducts));
+                }
+
+                if (aClusters.length) {
+                    aFilters.push(new Filter(aClusters.map(clu => new Filter("CLUSTER_ID", FilterOperator.EQ, clu)), false));
+                }
+
+                if (aYear.length) {
+                    aFilters.push(new Filter(aYear.map(y => new Filter("YEAR", FilterOperator.EQ, y)), false));
+                }
+
+                if (aChar.length) {
+                    aFilters.push(new Filter(aChar.map(a => new Filter("CHAR_DESC", FilterOperator.EQ, a)), false));
+                }
+                if (aPriMary.length) {
+                    aFilters.push(new Filter(quar.map(a => new Filter("PRIMARY_ID", FilterOperator.EQ, a)), false));
+                }
+
+                // const filterData = {
+                //     "LOCATION_ID": aLocs,         // array of selected locations
+                //     "CONFIG_PRODUCT": aConfigs,   // array of selected configurations
+                //     "PRODUCT_ID": aProducts,      // array of selected products
+                //     "CLUSTER_ID": aClusters.map(c => Number(c)),      // array of selected clusters
+                //     "PRIMARY_ID": aPriMary.map(c => Number(c)),
+                //     "YEAR": aYear,
+                //     "CHAR_DESC": aChar
+                // };
+                // const groupbyFields = [
+                //     "CLUSTER_ID",
+                //     "CLUSTER_SORT_SEQ",
+                //     "PRIMARY_ID_SEQUENCE",
+                //     "PRIMARY_ID",
+                //     "CHAR_NUM",
+                //     "CHAR_DESC",
+                //     "CHARVAL_NUM",
+                //     "CHAR_SEQUENCE",
+                //     "COLOR_CODE",
+                //     "YEAR",
+                //     "UNIQUE_ID_COLOR"
+                // ];
+                // const measures = [
+                //     { field: "ORD_QTY", operation: "sum" }
+                // ];
+                // const applyQuery = that.makeApplyQuery(filterData, groupbyFields, measures);
+
+                const aData = await that.readAllData('getClusterHeatmap', {}, [new Filter(aFilters, true)]);
+
+                // Create base maps
+                that.myMap = new Map(aData.map(item => [item.CHARVAL_NUM, item]));
+                that.myMapCHAR = new Map(aData.map(item => [item.CHAR_DESC, item]));
+                that.myMapMore = new Map(aData.map(item => [`${item.CHARVAL_NUM}_${item.CHAR_DESC}`, item]));
+
+                const myMapPrId = new Map();
+
+                // Group by PRIMARY_ID and find the item with max CHAR_SEQUENCE
+                const grouped = aData.reduce((acc, item) => {
+                    const key = item.PRIMARY_ID + "";
+                    if (!acc[key]) {
+                        acc[key] = [];
+                    }
+                    acc[key].push(item);
+                    return acc;
+                }, {});
+
+                Object.entries(grouped).forEach(([key, items]) => {
+                    // Find the item with the maximum CHAR_SEQUENCE
+                    const maxSeqItem = items.reduce((max, curr) =>
+                        curr.CHAR_SEQUENCE > max.CHAR_SEQUENCE ? curr : max
+                    );
+
+                    // If there are multiple entries with the same PRIMARY_ID and CHAR_SEQUENCE max,
+                    // sum their ORD_QTY values.
+                    const totalQty = items
+                        .filter(i => i.CHAR_SEQUENCE === maxSeqItem.CHAR_SEQUENCE)
+                        .reduce((sum, i) => sum + Number(i.ORD_QTY || 0), 0);
+
+                    // Create entry in the map
+                    myMapPrId.set(key, { ...maxSeqItem, ORD_QTY: totalQty });
+                });
+
+                that.myMapPrId = myMapPrId;
+
+                // Create derived array and unique order quantities
+                const ORD_QTY = [];
+                aData.forEach(o => {
+                    const key = o.PRIMARY_ID + "";
+                    const sumValue = myMapPrId.get(key).ORD_QTY;
+                    o.PRIMARY_ID_ORDER = `${o.PRIMARY_ID}(${sumValue})`;
+                    ORD_QTY.push(Number(sumValue));
+                });
+
+                let ordeQts = [...new Set(ORD_QTY)];
+                that.ordeQts = ordeQts;
+
+
+                that.allData = aData;
+                that.loadPivotTab(aData);
+                that.getView().setBusy(false);
+            } catch (error) {
+                that.getView().setBusy(false);
+                console.error(error);
+            }
+        },
+        readAllData(entity, urlParameters, filter = []) {
+            let allResults = [];
+            let skip = 0;
+            const top = urlParameters.$top || 50000; // Use provided top or default to 20,000
+
+            // Function to recursively fetch data
+            const fetchData = async () => {
+                // Create a copy of urlParameters and update skip
+                const currentUrlParameters = { ...urlParameters, $skip: skip };
+
+                try {
+                    const { promise, resolve, reject } = Promise.withResolvers();
+                    that.oModel.read(`/${entity}`, {
+                        filters: filter,
+                        urlParameters: currentUrlParameters,
+                        success(oRes) {
+                            resolve(oRes.results);
+                        },
+                        error(oError) {
+                            reject(oError);
+                        },
+                    });
+                    const results = await promise;
+
+                    // Add results to collection
+                    allResults = allResults.concat(results);
+
+                    // Check if more data is available
+                    if (results.length === top) {
+                        // Update skip for next batch
+                        skip += top;
+                        // Recursively fetch more data
+                        return await fetchData();
+                    } else {
+                        // All data retrieved
+                        return allResults;
+                    }
+                } catch (error) {
+                    throw error;
+                }
+            };
+
+            // Start fetching data
+            return fetchData();
         },
         changeLabel: function (json) {
             const headers = [];
@@ -492,7 +546,7 @@ sap.ui.define([
                     case "CHARVAL_NUM":
                         label = "Characteristic Value Number";
                         break;
-                    case "ORD_QTY_SUM":
+                    case "ORD_QTY":
                         label = "Order Quantity";
                         break;
                     case "COLOR_CODE":
@@ -553,6 +607,7 @@ sap.ui.define([
             existingDiv.appendChild(newDiv);
             var pivotDiv = document.querySelector(`[id*='pivotGrid']`);
             if (data.length === 0) {
+                that.byId("toolBar").setVisible(false);
                 // that.oGModel.setProperty("/showPivot", false);
                 pivotDiv.innerHTML = "";
                 MessageToast.show("No Data");
@@ -608,15 +663,6 @@ sap.ui.define([
         loadPivotCss() {
             $(".pvtTable").ready(function () {
                 setTimeout(function () {
-                    // Adjust vertical alignment for headers with large rowspan
-                    $(".pvtTable")
-                        .find("th[rowspan]")
-                        .each(function () {
-                            if (parseInt($(this).attr("rowspan")) > 7) {
-                                $(this).css("vertical-align", "top");
-                            }
-                        });
-
 
                     // Freeze columns in thead
                     function freezeHeaderColumns() {
@@ -1039,8 +1085,21 @@ sap.ui.define([
                         }
                     }
                 });
-        }, checkPrp() {
+        },
+        checkPrp() {
             that.loadPivotTab(that.allData);
+        },
+        OnClear() {
+            this.byId("mcLocation").setSelectedKey();
+            this.byId("mcConfig").setSelectedKey();
+            this.byId("mcProduct").setSelectedKey();
+            this.byId("mcCluster").setSelectedKeys();
+            this.byId("mcPrimary").setSelectedKeys();
+            this.byId("mcYear").setSelectedKeys();
+            this.byId("mcChar").setSelectedKeys();
+            var pivotDiv = document.querySelector(`[id*='pivotGrid']`);
+            pivotDiv.innerHTML = "";
+            that.byId("toolBar").setVisible(false);
         }
     });
 });
