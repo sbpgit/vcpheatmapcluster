@@ -16,9 +16,10 @@ server:
             - /test-resources
           url: https://ui5.sap.com
         backend:
-          - path: /v2
-            url: https://sbpbtp-vcpprovider-sc0jeojq-dev-config-products-srv.cfapps.us10.hana.ondemand.com
+          - url: https://sbpbtp-vcpprovider-sc0jeojq-dev-config-products-srv.cfapps.us10.hana.ondemand.com
+            authenticationType: OAuth2ClientCredentials
             destination: ConfigProdAuth
+            path: /v2
     - name: fiori-tools-appreload
       afterMiddleware: compression
       configuration:

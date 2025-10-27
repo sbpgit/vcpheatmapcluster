@@ -225,12 +225,12 @@ sap.ui.define([
         onChnageCluster() {
             const clus = this.byId("mcCluster").getSelectedKeys().map(c => Number(c));
             if (!clus.length) return;
-            // let aLocs = this.byId("mcLocation").getSelectedKey();
+            let ayear = this.byId("mcYear").getSelectedKeys();
             let fData = [];
             // if (clus.length === 0)
             //     // fData = that.FilterData.filter(o => aLocs === o.LOCATION_ID)
             // else
-            fData = that.FilterData.filter(o => clus.includes(o.CLUSTER_ID) && aLocs === o.LOCATION_ID)
+            fData = that.FilterData.filter(o => clus.includes(o.CLUSTER_ID) && ayear.includes(o.YEAR))
             let priId = [...new Set(fData.map(o => o.PRIMARY_ID).sort((a, b) => a - b))];
             let priModle = new JSONModel(priId.map(c => ({ key: c, text: c })));
             this.byId("mcPrimary").setModel(priModle);
@@ -276,179 +276,100 @@ sap.ui.define([
             // this.byId("mcChar").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
         },
         onApplyFilters: async function () {
-            try {
-                let aLocs = this.byId("mcLocation").getSelectedKey();
-                let aConfigs = this.byId("mcConfig").getSelectedKey();
-                let aProducts = this.byId("mcProduct").getSelectedKey();
-                let aClusters = this.byId("mcCluster").getSelectedKeys();
-                let aPriMary = this.byId("mcPrimary").getSelectedKeys();
-                let aYear = this.byId("mcYear").getSelectedKeys();
-                let aChar = this.byId("mcChar").getSelectedKeys();
-                // let quar = this.byId("idQuar").getSelectedKeys();
+            that.getView().setBusy(true);
 
-                let aFilters = [];
+            const sLoc = this.byId("mcLocation").getSelectedKey();
+            const sCfg = this.byId("mcConfig").getSelectedKey();
+            const sProd = this.byId("mcProduct").getSelectedKey();
 
-                if (!aLocs || !aConfigs || !aProducts)
-                    return MessageToast.show("Please Select Mandatory Field")
-
-                that.getView().setBusy(true)
+            const aClusters = this.byId("mcCluster").getSelectedKeys() || [];
+            const aPrimary = this.byId("mcPrimary").getSelectedKeys() || [];
+            const aYear = this.byId("mcYear").getSelectedKeys() || [];
+            const aChar = this.byId("mcChar").getSelectedKeys() || [];
 
 
-
-                if (aLocs) {
-                    aFilters.push(new Filter("LOCATION_ID", FilterOperator.EQ, aLocs));
-                }
-                if (aConfigs) {
-                    aFilters.push(new Filter("CONFIG_PRODUCT", FilterOperator.EQ, aConfigs));
-                }
-                if (aProducts) {
-                    aFilters.push(new Filter("PRODUCT_ID", FilterOperator.EQ, aProducts));
-                }
-
-                if (aClusters.length) {
-                    aFilters.push(new Filter(aClusters.map(clu => new Filter("CLUSTER_ID", FilterOperator.EQ, clu)), false));
-                }
-
-                if (aYear.length) {
-                    aFilters.push(new Filter(aYear.map(y => new Filter("YEAR", FilterOperator.EQ, y)), false));
-                }
-
-                if (aChar.length) {
-                    aFilters.push(new Filter(aChar.map(a => new Filter("CHAR_DESC", FilterOperator.EQ, a)), false));
-                }
-                if (aPriMary.length) {
-                    aFilters.push(new Filter(quar.map(a => new Filter("PRIMARY_ID", FilterOperator.EQ, a)), false));
-                }
-
-                // const filterData = {
-                //     "LOCATION_ID": aLocs,         // array of selected locations
-                //     "CONFIG_PRODUCT": aConfigs,   // array of selected configurations
-                //     "PRODUCT_ID": aProducts,      // array of selected products
-                //     "CLUSTER_ID": aClusters.map(c => Number(c)),      // array of selected clusters
-                //     "PRIMARY_ID": aPriMary.map(c => Number(c)),
-                //     "YEAR": aYear,
-                //     "CHAR_DESC": aChar
-                // };
-                // const groupbyFields = [
-                //     "CLUSTER_ID",
-                //     "CLUSTER_SORT_SEQ",
-                //     "PRIMARY_ID_SEQUENCE",
-                //     "PRIMARY_ID",
-                //     "CHAR_NUM",
-                //     "CHAR_DESC",
-                //     "CHARVAL_NUM",
-                //     "CHAR_SEQUENCE",
-                //     "COLOR_CODE",
-                //     "YEAR",
-                //     "UNIQUE_ID_COLOR"
-                // ];
-                // const measures = [
-                //     { field: "ORD_QTY", operation: "sum" }
-                // ];
-                // const applyQuery = that.makeApplyQuery(filterData, groupbyFields, measures);
-
-                const aData = await that.readAllData('getClusterHeatmap', {}, [new Filter(aFilters, true)]);
-
-                // Create base maps
-                that.myMap = new Map(aData.map(item => [item.CHARVAL_NUM, item]));
-                that.myMapCHAR = new Map(aData.map(item => [item.CHAR_DESC, item]));
-                that.myMapMore = new Map(aData.map(item => [`${item.CHARVAL_NUM}_${item.CHAR_DESC}`, item]));
-
-                const myMapPrId = new Map();
-
-                // Group by PRIMARY_ID and find the item with max CHAR_SEQUENCE
-                const grouped = aData.reduce((acc, item) => {
-                    const key = item.PRIMARY_ID + "";
-                    if (!acc[key]) {
-                        acc[key] = [];
-                    }
-                    acc[key].push(item);
-                    return acc;
-                }, {});
-
-                Object.entries(grouped).forEach(([key, items]) => {
-                    // Find the item with the maximum CHAR_SEQUENCE
-                    const maxSeqItem = items.reduce((max, curr) =>
-                        curr.CHAR_SEQUENCE > max.CHAR_SEQUENCE ? curr : max
-                    );
-
-                    // If there are multiple entries with the same PRIMARY_ID and CHAR_SEQUENCE max,
-                    // sum their ORD_QTY values.
-                    const totalQty = items
-                        .filter(i => i.CHAR_SEQUENCE === maxSeqItem.CHAR_SEQUENCE)
-                        .reduce((sum, i) => sum + Number(i.ORD_QTY || 0), 0);
-
-                    // Create entry in the map
-                    myMapPrId.set(key, { ...maxSeqItem, ORD_QTY: totalQty });
-                });
-
-                that.myMapPrId = myMapPrId;
-
-                // Create derived array and unique order quantities
-                const ORD_QTY = [];
-                aData.forEach(o => {
-                    const key = o.PRIMARY_ID + "";
-                    const sumValue = myMapPrId.get(key).ORD_QTY;
-                    o.PRIMARY_ID_ORDER = `${o.PRIMARY_ID}(${sumValue})`;
-                    ORD_QTY.push(Number(sumValue));
-                });
-
-                let ordeQts = [...new Set(ORD_QTY)];
-                that.ordeQts = ordeQts;
-
-
-                that.allData = aData;
-                that.loadPivotTab(aData);
-                that.getView().setBusy(false);
-            } catch (error) {
-                that.getView().setBusy(false);
-                console.error(error);
+            // Validate mandatory fields
+            if (!sLoc || !sCfg || !sProd) {
+                MessageToast.show("Please select all mandatory fields");
+                return;
             }
-        },
-        readAllData(entity, urlParameters, filter = []) {
-            let allResults = [];
-            let skip = 0;
-            const top = urlParameters.$top || 50000; // Use provided top or default to 20,000
-
-            // Function to recursively fetch data
-            const fetchData = async () => {
-                // Create a copy of urlParameters and update skip
-                const currentUrlParameters = { ...urlParameters, $skip: skip };
-
-                try {
-                    const { promise, resolve, reject } = Promise.withResolvers();
-                    that.oModel.read(`/${entity}`, {
-                        filters: filter,
-                        urlParameters: currentUrlParameters,
-                        success(oRes) {
-                            resolve(oRes.results);
-                        },
-                        error(oError) {
-                            reject(oError);
-                        },
-                    });
-                    const results = await promise;
-
-                    // Add results to collection
-                    allResults = allResults.concat(results);
-
-                    // Check if more data is available
-                    if (results.length === top) {
-                        // Update skip for next batch
-                        skip += top;
-                        // Recursively fetch more data
-                        return await fetchData();
-                    } else {
-                        // All data retrieved
-                        return allResults;
+            that.oModel.callFunction("/getClusterHeatmapFun", {
+                urlParameters: {
+                    loc: sLoc,
+                    cProd: sCfg,
+                    prod: sProd,
+                    year: JSON.stringify(aYear),
+                    clusterId: JSON.stringify(aClusters.map(o => Number(o))),
+                    charDesc: JSON.stringify(aChar),
+                    primaryId: JSON.stringify(aPrimary.map(o => Number(o)))
+                },
+                success: function (oData) {
+                    const aData = JSON.parse(oData.getClusterHeatmapFun);
+                    if (!aData || aData.length === 0) {
+                        MessageToast.show("No data found for selected criteria");
+                        that.getView().setBusy(false);
+                        return;
                     }
-                } catch (error) {
-                    throw error;
-                }
-            };
 
-            // Start fetching data
-            return fetchData();
+                    // const aData = oData.results;
+
+                    // Create base maps
+                    that.myMap = new Map(aData.map(item => [item.CHARVAL_NUM, item]));
+                    that.myMapCHAR = new Map(aData.map(item => [item.CHAR_DESC, item]));
+                    that.myMapMore = new Map(aData.map(item => [`${item.CHARVAL_NUM}_${item.CHAR_DESC}`, item]));
+
+                    const myMapPrId = new Map();
+
+                    // Group by PRIMARY_ID and find the item with max CHAR_SEQUENCE
+                    const grouped = aData.reduce((acc, item) => {
+                        const key = item.PRIMARY_ID + "";
+                        if (!acc[key]) {
+                            acc[key] = [];
+                        }
+                        acc[key].push(item);
+                        return acc;
+                    }, {});
+
+                    Object.entries(grouped).forEach(([key, items]) => {
+                        // Find the item with the maximum CHAR_SEQUENCE
+                        const maxSeqItem = items.reduce((max, curr) =>
+                            curr.CHAR_SEQUENCE > max.CHAR_SEQUENCE ? curr : max
+                        );
+
+                        // Sum ORD_QTY for items with max CHAR_SEQUENCE
+                        const totalQty = items
+                            .filter(i => i.CHAR_SEQUENCE === maxSeqItem.CHAR_SEQUENCE)
+                            .reduce((sum, i) => sum + Number(i.ORD_QTY || 0), 0);
+
+                        myMapPrId.set(key, { ...maxSeqItem, ORD_QTY: totalQty });
+                    });
+
+                    that.myMapPrId = myMapPrId;
+
+                    // Create derived array and unique order quantities
+                    const ORD_QTY = [];
+                    aData.forEach(o => {
+                        const key = o.PRIMARY_ID + "";
+                        const sumValue = myMapPrId.get(key).ORD_QTY;
+                        o.PRIMARY_ID_ORDER = `${o.PRIMARY_ID}(${sumValue})`;
+                        ORD_QTY.push(Number(sumValue));
+                    });
+
+                    let ordeQts = [...new Set(ORD_QTY)];
+                    that.ordeQts = ordeQts;
+
+                    that.allData = aData;
+                    that.loadPivotTab(aData);
+
+                    MessageToast.show(`Loaded ${aData.length} records successfully`);
+                    that.getView().setBusy(false);
+
+                },
+                error: function (oError) {
+                    that.getView().setBusy(false);
+                    console.error("Error fetching getClusterHeatmap:", oError);
+                }
+            });
         },
         changeLabel: function (json) {
             const headers = [];
@@ -909,156 +830,6 @@ sap.ui.define([
                 popover.find(".CharValNum").text(item.CHARVAL_NUM);
                 popover.find(".OrderQty").text(order_qty.split(")")[0]);
             }
-        },
-        makeApplyQuery(filterData, groupbyFields, measures) {
-            let st = "";
-
-            // Build filter string
-            Object.entries(filterData).forEach(([key, values]) => {
-                let thisFilterString = "";
-
-                values.forEach((itemValue, index) => {
-                    let val = `'${itemValue}'`;
-                    if (typeof itemValue === 'number')
-                        val = `${itemValue}`;
-                    if (index === 0) {
-                        thisFilterString = `${key} eq ${val}`;
-                    } else {
-                        thisFilterString += ` or ${key} eq ${val}`;
-                    }
-                });
-
-                if (values.length && st === "") {
-                    st = `(${thisFilterString})`;
-                } else if (values.length && st !== "") {
-                    st += ` and (${thisFilterString})`;
-                }
-            });
-
-            // Group by and aggregate
-            const groupby = groupbyFields.join(",");
-            const aggregate = measures
-                .map(m => `${m.field} with ${m.operation} as ${m.field}_${m.operation.toUpperCase()}`)
-                .join(", ");
-
-            // Final apply query
-            const finalApply = `filter(${st})/groupby((${groupby}),aggregate(${aggregate}))`;
-            return finalApply;
-        },
-        onExportPivot: function () {
-            try {
-                const mainDiv = that.byId("mainDivPOP").getDomRef();
-                if (!mainDiv) {
-                    throw new Error("Main div element not found");
-                }
-
-                // Find the table with class 'pvtTable'
-                const tableElement = mainDiv.querySelector('table.pvtTable');
-                if (!tableElement) {
-                    throw new Error("Table with class 'pvtTable' not found");
-                }
-
-                const clonedTable = tableElement.cloneNode(true);
-
-                // Remove all elements with class 'popover' from the cloned table
-                const popovers = clonedTable.querySelectorAll('.popover');
-                popovers.forEach(popover => {
-                    popover.remove();
-                });
-
-                const dataType = 'application/vnd.ms-excel';
-                // Use the cleaned cloned table instead of the original
-                const tableHTML = clonedTable.outerHTML;
-                const encodedHTML = encodeURIComponent(tableHTML);
-
-                const filename = "HeatMap.xls";
-                const downloadLink = document.createElement("a");
-                downloadLink.href = 'data:' + dataType + ', ' + encodedHTML;
-                downloadLink.download = filename;
-                downloadLink.style.display = 'none';
-
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                document.body.removeChild(downloadLink);
-
-            } catch (error) {
-                console.error("Export failed:", error);
-                // You might want to show a user-friendly error message here
-                // MessageToast.show("Export failed. Please try again.");
-            }
-        },
-        onTogglePress: function (oEvent) {
-            const oButton = oEvent.getSource();
-            const $btn = oButton.$();
-            const bPressed = oButton.getPressed();
-            const newText = bPressed ? "Hide Char" : "Show Char";
-
-            // A single duration for a consistent animation speed
-            const animationDuration = 500; // ms
-
-            // Set transform origin for a centered scale effect
-            $btn.css("transform-origin", "50% 50%");
-
-            // Animate out by shrinking horizontally
-            $({ animValue: 1 }).animate(
-                { animValue: 0 },
-                {
-                    duration: animationDuration,
-                    easing: "swing", // Optional: for a more natural feel
-                    step: function (now) {
-                        // 'now' progresses from 1 to 0
-                        // Apply this progress to both scaleX and opacity
-                        $btn.css({
-                            transform: `scaleX(${now})`,
-                            opacity: now,
-                        });
-                    },
-                    complete: function () {
-                        // --- Animation Out Complete ---
-
-                        // 1. Update the text while the button is invisible
-                        oButton.setText(newText);
-
-                        // 2. Animate in by expanding horizontally
-                        $({ animValue: 0 }).animate(
-                            { animValue: 1 },
-                            {
-                                duration: animationDuration,
-                                easing: "swing",
-                                step: function (now) {
-                                    // 'now' progresses from 0 to 1
-                                    $btn.css({
-                                        transform: `scaleX(${now})`,
-                                        opacity: now,
-                                    });
-                                },
-                            }
-                        );
-                    },
-                }
-            );
-            const selectedItem = bPressed ? "Hide Char" : "Show Char";
-            $(".pvtTable")
-                .find("td")
-                .each(function () {
-                    let cellText = $(this)[0].childNodes[0].textContent.trim();
-                    const item = that.myMap.get(cellText);
-                    let color;
-                    if (item) {
-                        color = item.COLOR_CODE;
-                    }
-                    if (color) {
-                        $(this).css("background-color", color);
-                        if (selectedItem !== "Show Char")
-                            $(this).css("color", "#ffffff");
-                        else
-                            $(this).css("color", "transparent"); // Make text invisible
-                    }
-
-                });
-
-
-
         },
         charHide: function (oEvent) {
             const oCheckBox = oEvent.getSource();

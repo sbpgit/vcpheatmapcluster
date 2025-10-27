@@ -80,6 +80,11 @@
         "dataSource": "mainService",
         "preload": true,
         "settings": {}
+      },
+      "": {
+        "dataSource": "mainService",
+        "preload": true,
+        "settings": {}
       }
     },
     "resources": {
