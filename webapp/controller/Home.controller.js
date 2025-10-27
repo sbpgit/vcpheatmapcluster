@@ -751,6 +751,30 @@ sap.ui.define([
                             // $(this).height(heights);
                         });
                     }
+                    if ($('#globalPopover').length === 0) {
+                        $('body').append(`
+        <div class="popover" id="globalPopover">
+            <div class="popover-content">
+                <div class="date-row">
+                    <span class="label" style="font-size: 13px;">Primary ID: </span>
+                    <span class="PrimaryId" style="color: blue; font-size: 14px;"></span>
+                </div>
+                <div class="date-row">
+                    <span class="label" style="font-size: 13px;">Cluster ID: </span>
+                    <span class="ClusterId" style="color: blue; font-size: 14px;"></span>
+                </div>
+                <div class="date-row">
+                    <span class="label" style="font-size: 13px;">Char Val: </span>
+                    <span class="CharValNum" style="color: blue; font-size: 14px;"></span>
+                </div>
+                <div class="date-row">
+                    <span class="label" style="font-size: 13px;">Order Qty: </span>
+                    <span class="OrderQty" style="color: blue; font-size: 14px;"></span>
+                </div>
+            </div>
+        </div>
+    `);
+                    }
 
                     // Format number cells (remove decimals, replace empty cells with 0)
                     function formatCells() {
@@ -774,40 +798,40 @@ sap.ui.define([
                                         $(this).css("color", "#ffffff");
                                     }
                                 }
+                                // In your loop, just add the class (no HTML injection)
                                 $(this).addClass("hoverCell");
-                                const popoverHtml = `
-   <div class="popover" id="globalPopover">
-    <div class="popover-content">
-        <div class="date-row">
-            <span class="label" style="font-size: 13px;">Primary ID: </span>
-            <span class="PrimaryId" style="color: blue; font-size: 14px;"></span>
-        </div>
-        <div class="date-row">
-            <span class="label" style="font-size: 13px;">Cluster ID: </span>
-            <span class="ClusterId" style="color: blue; font-size: 14px;"></span>
-        </div>
-        <div class="date-row">
-            <span class="label" style="font-size: 13px;">Char Val: </span>
-            <span class="CharValNum" style="color: blue; font-size: 14px;"></span>
-        </div>
-        <div class="date-row">
-            <span class="label" style="font-size: 13px;">Order Qty: </span>
-            <span class="OrderQty" style="color: blue; font-size: 14px;"></span>
-        </div>
-    </div>
-</div>`
+
+                                // Handle hover to position and show popover
+                                $(this).hover(
+                                    function (e) {
+                                        const $cell = $(this);
+                                        const $popover = $('#globalPopover');
+                                        const offset = $cell.offset();
+                                        const cellHeight = $cell.outerHeight();
+                                        const cellWidth = $cell.outerWidth();
+
+                                        // Position popover above the cell
+                                        $popover.css({
+                                            top: offset.top - $popover.outerHeight() - 10 + 'px',
+                                            left: offset.left + (cellWidth / 2) + 'px'
+                                        });
+
+                                        // Get headers and update popover content
+                                        const colHeader = $(".pvtTable").find("thead tr:first").find(`th:eq(${$cell.index() + 1})`)[0].textContent;
+                                        const rowHeader = $(".pvtTable").find(`tr:eq(${$cell.parent().index() + 2})`).find("th:first")[0].textContent;
+
+                                        $popover.addClass('show');
 
 
+                                        that.updateDate($popover, cellText, colHeader, rowHeader);
 
-                                // Add popover to header cell
-                                $(this).append(popoverHtml);
-
-                                // On hover, update date
-                                $(this).hover(function () {
-                                    const colHeader = $(".pvtTable").find("thead tr:first").find(`th:eq(${$(this).index() + 1})`)[0].textContent;
-                                    const rowHeader = $(".pvtTable").find(`tr:eq(${$(this).parent().index() + 2})`).find("th:first")[0].textContent
-                                    that.updateDate($(this), cellText, colHeader, rowHeader);
-                                });
+                                        // Show popover
+                                    },
+                                    function () {
+                                        // Hide popover when mouse leaves
+                                        $('#globalPopover').removeClass('show');
+                                    }
+                                );
                             });
                     }
 
@@ -822,7 +846,7 @@ sap.ui.define([
             const pId = rowHeader.split("(")[0];
             const order_qty = rowHeader.split("(")[1];
             const item = that.myMapMore.get(charDesc + "_" + colHeader);
-            const popover = $cell.find(".popover");
+            const popover = $('#globalPopover');
 
             if (item) {
                 popover.find(".PrimaryId").text(pId);

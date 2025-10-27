@@ -331,88 +331,82 @@ th.frezzThead {
     /* overflow: hidden; */
 }
 
-
-
-
-
-
-
-
-
-/* # popover css */
-
 .popover {
     visibility: hidden;
     opacity: 0;
-    position: absolute;
-    /* bottom: 90%; */
-    /* top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    margin-bottom: 1px; */
+    position: fixed;
+    transform: translate(-50%, 0);
 
-    /* Styling */
-    width: 140px;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-    border: 1px solid #e5e7eb;
-    padding: 10px;
+    /* Dark elegant design */
+    width: 110px;
+    height: 150px;
+    background: #1a1a2e;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 
+                0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+    padding: 12px;
     z-index: 10000;
+    pointer-events: none;
 
     /* Animation */
-    transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
-    transform: translateX(-50%) translateY(10px);
+    transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
 }
 
-/* Show popover on hover */
-.hoverCell:hover .popover {
+.popover.show {
     visibility: visible;
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
-}
-
-/* Popover content styling */
-.popover-content {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.date-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.date-label {
-    font-size: 14px;
-    font-weight: 500;
-    color: #6b7280;
-}
-
-.date-value {
-    font-size: 16px;
-    font-weight: bold;
-    color: #1f2937;
+    transform: translate(-50%, -5px);
 }
 
 .popover::after {
     content: '';
     position: absolute;
-    /* top: 100%; */
-    /* left: 50%; */
+    bottom: -8px;
+    left: 50%;
     transform: translateX(-50%);
-    top: auto;
-    bottom: 100%;
-    border: 6px solid transparent;
-    border-bottom-color: white;
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 8px solid #1a1a2e;
 }
 
-/* Hover effect for th */
+.popover-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    height: 100%;
+    justify-content: center;
+}
+
+.date-row {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px 0;
+}
+
+.date-row .label {
+    font-size: 10px !important;
+    font-weight: 600;
+    color: #8b8b8b !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.date-row span[class$="Id"],
+.date-row .CharValNum,
+.date-row .OrderQty {
+    font-size: 13px !important;
+    font-weight: 700;
+    color: #00d4ff !important;
+    text-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+}
+
 .hoverCell:hover {
-    background-color: #f3f4f6;
+    background-color: rgba(0, 212, 255, 0.05);
     cursor: pointer;
+    transition: background 0.2s ease;
 }
 
 .label {
