@@ -358,10 +358,10 @@ sap.ui.define([
                     let ordeQts = [...new Set(ORD_QTY)];
                     that.ordeQts = ordeQts;
 
-                    that.allData = aData;
+                    that.allData = aData
                     that.loadPivotTab(aData);
 
-                    MessageToast.show(`Loaded ${aData.length} records successfully`);
+                    // MessageToast.show(`Loaded ${aData.length} records successfully`);
                     that.getView().setBusy(false);
 
                 },
@@ -551,27 +551,26 @@ sap.ui.define([
                         }
                     },
                     sorters: {
-                        "  ": () => 0,
                         " ": function (a, b) {
                             const aCHAR_SEQUENCE = that.myMapCHAR.get(a).CHAR_SEQUENCE;
                             const bCHAR_SEQUENCE = that.myMapCHAR.get(b).CHAR_SEQUENCE;
 
 
                             return aCHAR_SEQUENCE - bCHAR_SEQUENCE;
-                        }
-                        // "  ": function (a, b) {
-                        //     a = a.split("(")[0];
-                        //     b = b.split("(")[0];
-                        //     const aCLUSTER_SORT_SEQ = that.myMapPrId.get(a).CLUSTER_SORT_SEQ;
-                        //     const bCLUSTER_SORT_SEQ = that.myMapPrId.get(b).CLUSTER_SORT_SEQ;
+                        },
+                        "  ": function (a, b) {
+                            a = a.split("(")[0];
+                            b = b.split("(")[0];
+                            const aCLUSTER_SORT_SEQ = that.myMapPrId.get(a).CLUSTER_SORT_SEQ;
+                            const bCLUSTER_SORT_SEQ = that.myMapPrId.get(b).CLUSTER_SORT_SEQ;
 
-                        //     const aPRIMARY_ID_SEQUENCE = that.myMapPrId.get(a).PRIMARY_ID_SEQUENCE;
-                        //     const bPRIMARY_ID_SEQUENCE = that.myMapPrId.get(b).PRIMARY_ID_SEQUENCE;
-                        //     if (aCLUSTER_SORT_SEQ !== bCLUSTER_SORT_SEQ) {
-                        //         return bCLUSTER_SORT_SEQ - aCLUSTER_SORT_SEQ;
-                        //     }
-                        //     return bPRIMARY_ID_SEQUENCE - aPRIMARY_ID_SEQUENCE;
-                        // }
+                            const aPRIMARY_ID_SEQUENCE = that.myMapPrId.get(a).PRIMARY_ID_SEQUENCE;
+                            const bPRIMARY_ID_SEQUENCE = that.myMapPrId.get(b).PRIMARY_ID_SEQUENCE;
+                            if (aCLUSTER_SORT_SEQ !== bCLUSTER_SORT_SEQ) {
+                                return aCLUSTER_SORT_SEQ - bCLUSTER_SORT_SEQ;
+                            }
+                            return aPRIMARY_ID_SEQUENCE - bPRIMARY_ID_SEQUENCE;
+                        }
                     },
                 });
                 that.loadPivotCss();
@@ -737,7 +736,7 @@ sap.ui.define([
                             const PItem = that.myMapPrId.get(forstTh.split('(')[0]);
 
                             if (PItem?.UNIQUE_ID_COLOR == 0) {
-                                $(this).find('th:first').addClass('BlackFont')
+                                $(this).find('th:first').addClass('BlueFont')
                             }
 
                             const lineHeight = Number(order_qty) * 0.001;
@@ -757,18 +756,18 @@ sap.ui.define([
             <div class="popover-content">
                 <div class="date-row">
                     <span class="label" style="font-size: 13px;">Primary ID: </span>
-                    <span class="PrimaryId" style="color: blue; font-size: 14px;"></span>
+                    <span class="PrimaryId" style="font-size: 15px;"></span>
                 </div>
                 <div class="date-row">
                     <span class="label" style="font-size: 13px;">Cluster ID: </span>
                     <span class="ClusterId" style="color: blue; font-size: 14px;"></span>
                 </div>
                 <div class="date-row">
-                    <span class="label" style="font-size: 13px;">Char Val: </span>
+                    <span class="label" style="font-size: 13px;">Characteristic Value: </span>
                     <span class="CharValNum" style="color: blue; font-size: 14px;"></span>
                 </div>
                 <div class="date-row">
-                    <span class="label" style="font-size: 13px;">Order Qty: </span>
+                    <span class="label" style="font-size: 13px;">Order Quantity: </span>
                     <span class="OrderQty" style="color: blue; font-size: 14px;"></span>
                 </div>
             </div>
@@ -850,7 +849,13 @@ sap.ui.define([
 
             if (item) {
                 popover.find(".PrimaryId").text(pId);
-                popover.find(".ClusterId").text(item.CLUSTER_ID);
+                if (that.myMapPrId.get(pId).UNIQUE_ID_COLOR == 0) {
+                    popover.find(".PrimaryId").attr('style', 'color: #0b74de !important');
+                }
+                else {
+                    popover.find(".PrimaryId").attr('style', 'color: black !important');
+                }
+                popover.find(".ClusterId").text(that.myMapPrId.get(pId).CLUSTER_ID);
                 popover.find(".CharValNum").text(item.CHARVAL_NUM);
                 popover.find(".OrderQty").text(order_qty.split(")")[0]);
             }
