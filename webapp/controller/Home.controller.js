@@ -1,10 +1,8 @@
 sap.ui.define([
     "sap/ui/core/mvc/Controller",
     "sap/ui/model/json/JSONModel",
-    "sap/ui/model/Filter",
-    "sap/ui/model/FilterOperator",
     'sap/m/MessageToast'
-], (Controller, JSONModel, Filter, FilterOperator, MessageToast) => {
+], (Controller, JSONModel, MessageToast) => {
     "use strict";
     var that;
 
@@ -16,7 +14,6 @@ sap.ui.define([
         },
         async onAfterRendering() {
             that.byId("toolBar").setVisible(false);
-            // await this._loadYear();
             await this.loadAll();
         },
         loadAll() {
@@ -58,105 +55,17 @@ sap.ui.define([
                 });
             });
         },
-        _loadYear: function () {
-            return new Promise((resolve, reject) => {
-                that.byId("mcYear").setBusy(true);
-
-                let allResults = [];
-                let skip = 0;
-                const top = 50000;
-
-                const fetchData = () => {
-                    that.oModel.read("/getClusterHeatmap", {
-                        urlParameters: {
-                            "$select": "YEAR",
-                            "$top": top,
-                            "$skip": skip
-                        },
-                        success: function (oData) {
-                            allResults = allResults.concat(oData.results);
-
-                            // If we got exactly 50000 records, there might be more
-                            if (oData.results.length === top) {
-                                skip += top;
-                                fetchData(); // Recursively fetch next batch
-                            } else {
-                                // We've got all the data
-                                that.byId("mcYear").setBusy(false);
-
-                                let uniqueYears = [...new Set(allResults.map(o => o.YEAR))];
-                                let years = uniqueYears.map(y => ({ key: y, text: y }));
-
-                                that.byId("mcYear").setModel(new JSONModel(years));
-                                that.byId("mcYear").bindItems("/", new sap.ui.core.Item({
-                                    key: "{key}",
-                                    text: "{text}"
-                                }));
-
-                                resolve(allResults);
-                            }
-                        },
-                        error: function (e) {
-                            that.byId("mcYear").setBusy(false);
-                            console.log(e);
-                            reject(e);
-                        }
-                    });
-                };
-
-                fetchData(); // Start the first fetch
-            });
-        },
         onchageProd: function () {
-            // let aYear = this.byId("mcYear").getSelectedKeys();
             let aLocs = this.byId("mcLocation").getSelectedKey();
             let aConfigs = this.byId("mcConfig").getSelectedKey();
             let aProducts = this.byId("mcProduct").getSelectedKey();
 
-            // const aFilters = [];
-
-            // if (aYear.length === 0) return;
             if (!aLocs) return;
             if (!aConfigs) return;
             if (!aProducts) return;
-
-            // if (aLocs) {
-            //     aFilters.push(new Filter("LOCATION_ID", FilterOperator.EQ, aLocs));
-            // }
-            // if (aConfigs) {
-            //     aFilters.push(new Filter("CONFIG_PRODUCT", FilterOperator.EQ, aConfigs));
-            // }
-            // if (aProducts) {
-            //     aFilters.push(new Filter("PRODUCT_ID", FilterOperator.EQ, aProducts));
-            // }
-            // if (aYear.length) {
-            //     aFilters.push(new Filter(aYear.map(p => new Filter("YEAR", FilterOperator.EQ, p)), false));
-            // }
-
-            // const filter = new Filter(aFilters, true);
-
-
             that.getView().setBusy(true);
-
-
-            // let aFilters = aLocs.map(loc => new Filter("LOCATION_ID", FilterOperator.EQ, loc));
-            // const filterData = {
-            //     "YEAR": aYear,
-            //     "LOCATION_ID": aLocs,
-            //     "CONFIG_PRODUCT": aConfigs,
-            //     "PRODUCT_ID": aProducts
-            // };
-            // const groupbyFields = ["LOCATION_ID", "CLUSTER_ID", "PRIMARY_ID", "CHAR_DESC", "YEAR", "PRODUCT_ID"];
-            // const measures = [
-            //     { field: "ORD_QTY", operation: "sum" }
-            // ];
-            // const applyQuery = that.makeApplyQuery(filterData, groupbyFields, measures);
-            that.oModel.callFunction("/getClusterFilter", {
-                // filters: [filter],
-                // urlParameters: { "$apply": applyQuery + "/orderby(CLUSTER_ID)", "$top": 50000 },
+            that.oModel.callFunction("/getClusterYear", {
                 urlParameters: {
-                    // "$select": "CLUSTER_ID, PRIMARY_ID, CHAR_DESC",// Select only needed fields,
-                    // "$top": 50000
                     loc: aLocs,
                     cProd: aConfigs,
                     prod: aProducts
@@ -164,12 +73,42 @@ sap.ui.define([
                 success: function (oData) {
                     that.getView().setBusy(false);
 
-                    that.FilterData = JSON.parse(oData.getClusterFilter);
-                    const data = JSON.parse(oData.getClusterFilter);
+                    const data = JSON.parse(oData.getClusterYear);
 
-                    let year = [...new Set(data.map(o => o.YEAR))];
+                    let year = [...new Set(data.map(o => o.YEAR))].sort((a, b) => a - b);
                     that.byId("mcYear").setModel(new JSONModel(year.map(c => ({ key: c, text: c }))));
                     that.byId("mcYear").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
+                },
+                error: function (oError) {
+                    console.error("Error fetching getClusterHeatmap:", oError);
+                }
+            });
+        },
+        onChangeYear: function () {
+            let aYear = this.byId("mcYear").getSelectedKey();
+            let aLocs = this.byId("mcLocation").getSelectedKey();
+            let aConfigs = this.byId("mcConfig").getSelectedKey();
+            let aProducts = this.byId("mcProduct").getSelectedKey();
+
+            if (!aYear) return;
+            if (!aLocs) return;
+            if (!aConfigs) return;
+            if (!aProducts) return;
+
+            that.getView().setBusy(true);
+
+            that.oModel.callFunction("/getClusterFilter", {
+                urlParameters: {
+                    loc: aLocs,
+                    cProd: aConfigs,
+                    prod: aProducts,
+                    year: JSON.stringify([aYear])
+                },
+                success: function (oData) {
+                    that.getView().setBusy(false);
+
+                    that.FilterData = JSON.parse(oData.getClusterFilter);
+                    const data = JSON.parse(oData.getClusterFilter);
 
                     // CLUSTER_ID with "Select All"
                     let clusterId = [...new Set(data.map(o => o.CLUSTER_ID).sort((a, b) => a - b))];
@@ -197,40 +136,15 @@ sap.ui.define([
                 }
             });
         },
-        onchangeyear() {
-            const year = this.byId("mcYear").getSelectedKeys();
-            if (!year.length) return;
-            // let aLocs = this.byId("mcLocation").getSelectedKey();
-            let fData = [];
-            // if (clus.length === 0)
-            //     fData = that.FilterData.filter(o => aLocs === o.LOCATION_ID)
-            // else
-            fData = that.FilterData.filter(o => year.includes(o.YEAR))
-
-            //cluter
-            let clue = [...new Set(fData.map(o => o.CLUSTER_ID).sort((a, b) => a - b))];
-            let clModle = new JSONModel(clue.map(c => ({ key: c, text: c })));
-            this.byId("mcCluster").setModel(clModle);
-            this.byId("mcCluster").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
-
-            let priId = [...new Set(fData.map(o => o.PRIMARY_ID).sort((a, b) => a - b))];
-            let priModle = new JSONModel(priId.map(c => ({ key: c, text: c })));
-            this.byId("mcPrimary").setModel(priModle);
-            this.byId("mcPrimary").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
-            // CHAR_DESC
-            let charDesc = [...new Set(fData.map(o => o.CHAR_DESC))];
-            this.byId("mcChar").setModel(new JSONModel(charDesc.map(c => ({ key: c, text: c }))));
-            this.byId("mcChar").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
-        },
         onChnageCluster() {
             const clus = this.byId("mcCluster").getSelectedKeys().map(c => Number(c));
             if (!clus.length) return;
-            let ayear = this.byId("mcYear").getSelectedKeys();
+            let ayear = this.byId("mcYear").getSelectedKey();
             let fData = [];
             // if (clus.length === 0)
             //     // fData = that.FilterData.filter(o => aLocs === o.LOCATION_ID)
             // else
-            fData = that.FilterData.filter(o => clus.includes(o.CLUSTER_ID) && ayear.includes(o.YEAR))
+            fData = that.FilterData.filter(o => clus.includes(o.CLUSTER_ID) && ayear === o.YEAR)
             let priId = [...new Set(fData.map(o => o.PRIMARY_ID).sort((a, b) => a - b))];
             let priModle = new JSONModel(priId.map(c => ({ key: c, text: c })));
             this.byId("mcPrimary").setModel(priModle);
@@ -253,30 +167,19 @@ sap.ui.define([
             let oProdModel = new JSONModel(prodId.map(c => ({ key: c, text: c })));
             this.byId("mcProduct").setModel(oProdModel);
             this.byId("mcProduct").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
+        },
+        onConfigSelect() {
+            let aCprod = this.byId("mcConfig").getSelectedKey();
+            let aLoc = this.byId("mcLocation").getSelectedKey();
+            const fData = that.facdata.filter(o => aCprod === o.REF_PRODID && aLoc === o.DEMAND_LOC);
 
-            // // CLUSTER_ID with "Select All"
-            // let clusterId = [...new Set(fData.map(o => o.CLUSTER_ID).sort((a, b) => a - b))];
-            // let oClusterModel = new JSONModel(clusterId.map(c => ({ key: c, text: c })));
-            // this.byId("mcCluster").setModel(oClusterModel);
-            // this.byId("mcCluster").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
-
-            // let priId = [...new Set(fData.map(o => o.PRIMARY_ID).sort((a, b) => a - b))];
-            // let priModle = new JSONModel(priId.map(c => ({ key: c, text: c })));
-            // this.byId("mcPrimary").setModel(priModle);
-            // this.byId("mcPrimary").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
-
-            // YEAR
-            // let Year = [...new Set(fData.map(o => o.YEAR))];
-            // this.byId("mcYear").setModel(new JSONModel(Year.map(c => ({ key: c, text: c }))));
-            // this.byId("mcYear").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
-
-            // // CHAR_DESC
-            // let charDesc = [...new Set(fData.map(o => o.CHAR_DESC))];
-            // this.byId("mcChar").setModel(new JSONModel(charDesc.map(c => ({ key: c, text: c }))));
-            // this.byId("mcChar").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
+            // PRODUCT_ID
+            let prodId = [...new Set(fData.map(o => o.PRODUCT_ID))];
+            let oProdModel = new JSONModel(prodId.map(c => ({ key: c, text: c })));
+            this.byId("mcProduct").setModel(oProdModel);
+            this.byId("mcProduct").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
         },
         onApplyFilters: async function () {
-            that.getView().setBusy(true);
 
             const sLoc = this.byId("mcLocation").getSelectedKey();
             const sCfg = this.byId("mcConfig").getSelectedKey();
@@ -284,21 +187,23 @@ sap.ui.define([
 
             const aClusters = this.byId("mcCluster").getSelectedKeys() || [];
             const aPrimary = this.byId("mcPrimary").getSelectedKeys() || [];
-            const aYear = this.byId("mcYear").getSelectedKeys() || [];
+            const aYear = this.byId("mcYear").getSelectedKey();
             const aChar = this.byId("mcChar").getSelectedKeys() || [];
 
 
             // Validate mandatory fields
-            if (!sLoc || !sCfg || !sProd) {
+            if (!sLoc || !sCfg || !sProd || !aYear) {
                 MessageToast.show("Please select all mandatory fields");
                 return;
             }
+            that.getView().setBusy(true);
+
             that.oModel.callFunction("/getClusterHeatmapFun", {
                 urlParameters: {
                     loc: sLoc,
                     cProd: sCfg,
                     prod: sProd,
-                    year: JSON.stringify(aYear),
+                    year: JSON.stringify([aYear]),
                     clusterId: JSON.stringify(aClusters.map(o => Number(o))),
                     charDesc: JSON.stringify(aChar),
                     primaryId: JSON.stringify(aPrimary.map(o => Number(o)))
@@ -520,13 +425,13 @@ sap.ui.define([
                 data = data.filter(o => o.UNIQUE_ID_COLOR === 0);
             }
             that.byId("toolBar").setVisible(true);
-            var newDiv = document.createElement("div");
+            const newDiv = document.createElement("div");
             newDiv.id = `pivotGrid`;
             newDiv.textContent = "";
-            var existingDiv = document.querySelector(`[id*='mainDivPOP']`);
+            const existingDiv = document.querySelector(`[id*='mainDivPOP']`);
 
             existingDiv.appendChild(newDiv);
-            var pivotDiv = document.querySelector(`[id*='pivotGrid']`);
+            let pivotDiv = document.querySelector(`[id*='pivotGrid']`);
             if (data.length === 0) {
                 that.byId("toolBar").setVisible(false);
                 // that.oGModel.setProperty("/showPivot", false);
@@ -538,7 +443,7 @@ sap.ui.define([
             }
             that.pivotPage.setBusy(true);
             if (window.jQuery && window.jQuery.fn.pivot) {
-                var pivotData = that.changeLabel(data);
+                const pivotData = that.changeLabel(data);
                 pivotDiv = $(pivotDiv);
                 $(pivotDiv).pivot(pivotData, {
                     rows: ["  "],
@@ -868,20 +773,26 @@ sap.ui.define([
             $(".pvtTable")
                 .find("td")
                 .each(function () {
-                    let cellText = $(this)[0].childNodes[0].textContent.trim();
+                    const $cell = $(this);
+                    // Guard against missing child nodes
+                    const firstChild = $cell[0].childNodes && $cell[0].childNodes[0];
+                    const cellText = firstChild ? firstChild.textContent.trim() : "";
+
                     const item = that.myMap.get(cellText);
                     let color;
                     if (item) {
                         color = item.COLOR_CODE;
                     }
+
                     if (color) {
-                        $(this).css("background-color", color);
+                        $cell.css("background-color", color);
+
                         if (bSelected) {
                             // Checkbox is checked = Hide characteristics
-                            $(this).css("color", "transparent"); // Make text invisible
+                            $cell.css("color", "transparent"); // Make text invisible
                         } else {
                             // Checkbox is unchecked = Show characteristics
-                            $(this).css("color", "#ffffff");
+                            $cell.css("color", "#ffffff");
                         }
                     }
                 });
@@ -895,11 +806,13 @@ sap.ui.define([
             this.byId("mcProduct").setSelectedKey();
             this.byId("mcCluster").setSelectedKeys();
             this.byId("mcPrimary").setSelectedKeys();
-            this.byId("mcYear").setSelectedKeys();
+            this.byId("mcYear").setSelectedKey();
             this.byId("mcChar").setSelectedKeys();
-            var pivotDiv = document.querySelector(`[id*='pivotGrid']`);
-            pivotDiv.innerHTML = "";
-            that.byId("toolBar").setVisible(false);
+            const pivotDiv = document.querySelector("div[id*='pivotGrid']");
+            if (pivotDiv) {
+                pivotDiv.innerHTML = "";
+            }
+            that.byId("toolBar")?.setVisible(false);
         }
     });
 });

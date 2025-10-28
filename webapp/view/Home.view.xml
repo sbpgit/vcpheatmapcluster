@@ -7,26 +7,21 @@
     xmlns:fb="sap.ui.comp.filterbar">
     <f:DynamicPage id="idDynamicPageHP">
         <f:title>
-            <f:DynamicPageTitle>
-
-            </f:DynamicPageTitle>
+            <f:DynamicPageTitle />
         </f:title>
         <f:header>
             <f:DynamicPageHeader pinnable="true">
                 <fb:FilterBar id="filterbar" clear="OnClear" showClearOnFB="true" persistencyKey="myPersKey" useToolbar="false" search="onApplyFilters">
                     <fb:filterGroupItems>
-                      
                         <fb:FilterGroupItem name="Location" mandatory="true" label="Location" groupName="Group1" visibleInFilterBar="true">
                             <fb:control>
-                                <ComboBox id="mcLocation"  selectionChange=".onLocationSelect">
-                                    <!-- <core:Item key="PFC1" text="PFC1" /> -->
-                                </ComboBox >
+                                <ComboBox id="mcLocation" selectionChange=".onLocationSelect" />
                             </fb:control>
                         </fb:FilterGroupItem>
 
                         <fb:FilterGroupItem name="Configuration Product" mandatory="true" label="Configuration Product" groupName="Group1" visibleInFilterBar="true">
                             <fb:control>
-                                <ComboBox id="mcConfig"/>
+                                <ComboBox id="mcConfig" selectionChange=".onConfigSelect" />
                             </fb:control>
                         </fb:FilterGroupItem>
                         <fb:FilterGroupItem name="Product" label="Product" mandatory="true" groupName="Group1" visibleInFilterBar="true">
@@ -34,22 +29,20 @@
                                 <ComboBox id="mcProduct" selectionChange="onchageProd" />
                             </fb:control>
                         </fb:FilterGroupItem>
-                          <fb:FilterGroupItem name="Year" mandatory="true" label="Year" groupName="Group1" visibleInFilterBar="true">
+                        <fb:FilterGroupItem name="Year" mandatory="true" label="Year" groupName="Group1" visibleInFilterBar="true">
                             <fb:control>
-                                <MultiComboBox id="mcYear" selectionChange="onchangeyear">
-                                </MultiComboBox>
+                                <!-- <MultiComboBox busyIndicatorDelay="0" id="mcYear" selectionChange="onChangeYear" /> -->
+                                <ComboBox busyIndicatorDelay="0" id="mcYear" selectionChange="onChangeYear" />
                             </fb:control>
                         </fb:FilterGroupItem>
                         <fb:FilterGroupItem name="Cluster" label="Cluster" groupName="Group1" visibleInFilterBar="true">
                             <fb:control>
-                                <MultiComboBox id="mcCluster"  showSelectAll="true" selectionFinish="onChnageCluster">
-                                </MultiComboBox>
+                                <MultiComboBox id="mcCluster" showSelectAll="true" selectionFinish="onChnageCluster" />
                             </fb:control>
                         </fb:FilterGroupItem>
                         <fb:FilterGroupItem name="Primary" label="Primary ID" groupName="Group1" visibleInFilterBar="true">
                             <fb:control>
-                                <MultiComboBox id="mcPrimary" showSelectAll="true">
-                                </MultiComboBox>
+                                <MultiComboBox id="mcPrimary" showSelectAll="true" />
                             </fb:control>
                         </fb:FilterGroupItem>
                         <fb:FilterGroupItem name="Characterist Descriptions" label="Characterist Descriptions" groupName="Group1" visibleInFilterBar="true">
@@ -67,12 +60,11 @@
             </f:DynamicPageHeader>
         </f:header>
         <f:content>
-
             <VBox id="idPivotPagePOP" busyIndicatorDelay="0">
                 <OverflowToolbar height="8%" id="toolBar" visible="{= ${oGModel>/showPivot} }">
-                     <HBox alignItems="Center" class="sapUiTinyMarginBegin">
+                    <HBox alignItems="Center" class="sapUiTinyMarginBegin">
                         <HBox alignItems="Center" class="sapUiTinyMarginEnd">
-                            <core:Icon src="sap-icon://circle-task-2"  color="#0070F2" size="0.875rem" class="sapUiTinyMarginEnd" />
+                            <core:Icon src="sap-icon://circle-task-2" color="#0070F2" size="0.875rem" class="sapUiTinyMarginEnd" />
                             <Text text="PRPID" />
                         </HBox>
                         <HBox alignItems="Center">
@@ -80,12 +72,9 @@
                             <Text text="Primary ID" />
                         </HBox>
                     </HBox>
-
-                    
-
                     <ToolbarSpacer />
-<CheckBox id="idCharCheck" text="Hide Characteristic Values" selected="true" select="charHide"></CheckBox>
-                    <CheckBox id="idPrp" text="PRPID" selected="false" select="checkPrp"></CheckBox>
+                    <CheckBox id="idCharCheck" text="Hide Characteristic Values" selected="true" select="charHide" />
+                    <CheckBox id="idPrp" text="PRPID" selected="false" select="checkPrp" />
                 </OverflowToolbar>
                 <!-- <table:Table visible="{= !${oGModel>/showPivot} }" width="100%" /> -->
                 <html:div id="mainDivPOP" class="mainDivClass" />
