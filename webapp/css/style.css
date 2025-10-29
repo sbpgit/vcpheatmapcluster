@@ -182,19 +182,19 @@ thead {
 
 
 /* pivot table main settings */
-.mainDivClass {
+/* .mainDivClass {
     overflow: scroll;
     width: 100%;
     /* height: 67vh; */
 
     /* position: relative; */
-    height: 100vh;
+    /* height: 90vh; */
     /* overflow: auto; */
-}
+/* } */
 
 .mainDivClass {
     position: relative;
-    height: 100vh;
+    height: 75vh;
     overflow: auto;
 }
 
