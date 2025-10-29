@@ -45,7 +45,7 @@
                                 <MultiComboBox id="mcPrimary" showSelectAll="true" />
                             </fb:control>
                         </fb:FilterGroupItem>
-                        <fb:FilterGroupItem name="Characterist Descriptions" label="Characterist Descriptions" groupName="Group1" visibleInFilterBar="true">
+                        <fb:FilterGroupItem name="Characteristic" label="Characteristic" groupName="Group1" visibleInFilterBar="true">
                             <fb:control>
                                 <MultiComboBox id="mcChar" showSelectAll="true" />
                             </fb:control>
