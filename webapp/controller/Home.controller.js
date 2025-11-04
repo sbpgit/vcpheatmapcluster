@@ -107,8 +107,10 @@ sap.ui.define([
                 success: function (oData) {
                     that.getView().setBusy(false);
 
-                    that.FilterData = JSON.parse(oData.getClusterFilter);
-                    const data = JSON.parse(oData.getClusterFilter);
+                    const res = JSON.parse(oData.getClusterFilter);
+                    res.sort((a, b) => a.CHAR_SEQUENCE - b.CHAR_SEQUENCE);
+                    that.FilterData = res;
+                    const data = res;
 
                     // CLUSTER_ID with "Select All"
                     let clusterId = [...new Set(data.map(o => o.CLUSTER_ID).sort((a, b) => a - b))];
