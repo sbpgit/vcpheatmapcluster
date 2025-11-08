@@ -21,7 +21,7 @@ sap.ui.define([
                 that.oModel.read("/getfactorylocdesc", {
                     urlParameters: {
                         "$apply": "groupby((DEMAND_LOC,PRODUCT_ID,REF_PRODID))",
-                        "$top": 50000
+                        "$top": 10000
                     },
                     success: function (oData) {
                         that.getView().setBusy(false);
@@ -31,18 +31,21 @@ sap.ui.define([
                         // LOCATION_ID
                         let uniqueLocs = [...new Set(oData.results.map(d => d.DEMAND_LOC))];
                         let oModel = new JSONModel(uniqueLocs.map(l => ({ key: l, text: l })));
+                        oModel.setSizeLimit(10000);
                         that.byId("mcLocation").setModel(oModel);
                         that.byId("mcLocation").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
 
                         // CONFIG_PRODUCT
                         let congifprod = [...new Set(oData.results.map(o => o.REF_PRODID))];
                         let oConfigModel = new JSONModel(congifprod.map(c => ({ key: c, text: c })));
+                        oConfigModel.setSizeLimit(10000);
                         that.byId("mcConfig").setModel(oConfigModel);
                         that.byId("mcConfig").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
 
                         // PRODUCT_ID
                         let prodId = [...new Set(oData.results.map(o => o.PRODUCT_ID))];
                         let oProdModel = new JSONModel(prodId.map(c => ({ key: c, text: c })));
+                        oProdModel.setSizeLimit(10000);
                         that.byId("mcProduct").setModel(oProdModel);
                         that.byId("mcProduct").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
 
@@ -77,6 +80,7 @@ sap.ui.define([
 
                     let year = [...new Set(data.map(o => o.YEAR))].sort((a, b) => a - b);
                     that.byId("mcYear").setModel(new JSONModel(year.map(c => ({ key: c, text: c }))));
+                    that.byId("mcYear").getModel().setSizeLimit(10000);
                     that.byId("mcYear").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
                 },
                 error: function (oError) {
@@ -115,17 +119,20 @@ sap.ui.define([
                     // CLUSTER_ID with "Select All"
                     let clusterId = [...new Set(data.map(o => o.CLUSTER_ID).sort((a, b) => a - b))];
                     let oClusterModel = new JSONModel(clusterId.map(c => ({ key: c, text: c })));
+                    oClusterModel.setSizeLimit(10000);
                     that.byId("mcCluster").setModel(oClusterModel);
                     that.byId("mcCluster").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
 
                     let priId = [...new Set(data.map(o => o.PRIMARY_ID).sort((a, b) => a - b))];
                     let priModle = new JSONModel(priId.map(c => ({ key: c, text: c })));
+                    priModle.setSizeLimit(10000);
                     that.byId("mcPrimary").setModel(priModle);
                     that.byId("mcPrimary").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
 
                     // CHAR_DESC
                     let charDesc = [...new Set(data.map(o => o.CHAR_DESC))];
                     that.byId("mcChar").setModel(new JSONModel(charDesc.map(c => ({ key: c, text: c }))));
+                    that.byId("mcChar").getModel().setSizeLimit(10000);
                     that.byId("mcChar").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
 
                     // let quar = [...new Set(oData.results.map(o => o.QUARTER))];
@@ -149,11 +156,13 @@ sap.ui.define([
             fData = that.FilterData.filter(o => clus.includes(o.CLUSTER_ID) && ayear === o.YEAR)
             let priId = [...new Set(fData.map(o => o.PRIMARY_ID).sort((a, b) => a - b))];
             let priModle = new JSONModel(priId.map(c => ({ key: c, text: c })));
+            priModle.setSizeLimit(10000);
             this.byId("mcPrimary").setModel(priModle);
             this.byId("mcPrimary").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
             // CHAR_DESC
             let charDesc = [...new Set(fData.map(o => o.CHAR_DESC))];
             this.byId("mcChar").setModel(new JSONModel(charDesc.map(c => ({ key: c, text: c }))));
+            this.byId("mcChar").setSizeLimit(10000);
             this.byId("mcChar").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
         },
         onLocationSelect() {
@@ -161,12 +170,14 @@ sap.ui.define([
             const fData = that.facdata.filter(o => aLocs === o.DEMAND_LOC)
             let congifprod = [...new Set(fData.map(o => o.REF_PRODID))];
             let oConfigModel = new JSONModel(congifprod.map(c => ({ key: c, text: c })));
+            oConfigModel.setSizeLimit(10000);
             this.byId("mcConfig").setModel(oConfigModel);
             this.byId("mcConfig").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
 
             // PRODUCT_ID
             let prodId = [...new Set(fData.map(o => o.PRODUCT_ID))];
             let oProdModel = new JSONModel(prodId.map(c => ({ key: c, text: c })));
+            oProdModel.setSizeLimit(10000);
             this.byId("mcProduct").setModel(oProdModel);
             this.byId("mcProduct").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
         },
@@ -178,6 +189,7 @@ sap.ui.define([
             // PRODUCT_ID
             let prodId = [...new Set(fData.map(o => o.PRODUCT_ID))];
             let oProdModel = new JSONModel(prodId.map(c => ({ key: c, text: c })));
+            oProdModel.setSizeLimit(10000);
             this.byId("mcProduct").setModel(oProdModel);
             this.byId("mcProduct").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
         },
