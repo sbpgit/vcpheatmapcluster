@@ -15,18 +15,27 @@
                     <fb:filterGroupItems>
                         <fb:FilterGroupItem name="Location" mandatory="true" label="Location" groupName="Group1" visibleInFilterBar="true">
                             <fb:control>
-                                <ComboBox id="mcLocation" selectionChange=".onLocationSelect" />
+                                <!-- <ComboBox id="mcLocation" selectionChange=".onLocationSelect" />
+                                 -->
+                                <ComboBox id="mcLocation" selectionChange=".onLocationSelect" showSecondaryValues="true" items="{/items}">
+                                    <core:ListItem key="{key}" text="{text}" additionalText ="{desc}" />
+                                </ComboBox>
                             </fb:control>
                         </fb:FilterGroupItem>
 
                         <fb:FilterGroupItem name="Configuration Product" mandatory="true" label="Configuration Product" groupName="Group1" visibleInFilterBar="true">
                             <fb:control>
-                                <ComboBox id="mcConfig" selectionChange=".onConfigSelect" />
+
+                                <ComboBox id="mcConfig" selectionChange=".onConfigSelect" showSecondaryValues="true" items="{/items}">
+                                    <core:ListItem key="{key}" text="{text}" additionalText ="{desc}" />
+                                </ComboBox>
                             </fb:control>
                         </fb:FilterGroupItem>
                         <fb:FilterGroupItem name="Product" label="Product" mandatory="true" groupName="Group1" visibleInFilterBar="true">
                             <fb:control>
-                                <ComboBox id="mcProduct" selectionChange="onchageProd" />
+                                <ComboBox id="mcProduct" selectionChange="onchageProd" showSecondaryValues="true" items="{/items}">
+                                    <core:ListItem key="{key}" text="{text}" additionalText ="{desc}" />
+                                </ComboBox>
                             </fb:control>
                         </fb:FilterGroupItem>
                         <fb:FilterGroupItem name="Year" mandatory="true" label="Year" groupName="Group1" visibleInFilterBar="true">

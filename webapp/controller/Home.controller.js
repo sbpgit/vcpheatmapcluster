@@ -20,7 +20,7 @@ sap.ui.define([
             return new Promise((resolve, reject) => {
                 that.oModel.read("/getfactorylocdesc", {
                     urlParameters: {
-                        "$apply": "groupby((DEMAND_LOC,PRODUCT_ID,REF_PRODID))",
+                        "$apply": "groupby((DEMAND_LOC,LOCATION_DESC,PRODUCT_ID,PROD_DESC,REF_PRODID,REFPROD_DESC))",
                         "$top": 10000
                     },
                     success: function (oData) {
@@ -30,24 +30,59 @@ sap.ui.define([
 
                         // LOCATION_ID
                         let uniqueLocs = [...new Set(oData.results.map(d => d.DEMAND_LOC))];
-                        let oModel = new JSONModel(uniqueLocs.map(l => ({ key: l, text: l })));
+
+                        let oModel = new JSONModel({
+                            items:
+                                uniqueLocs.map(l => {
+                                    let locObj = oData.results.find(d => d.DEMAND_LOC === l);
+                                    return {
+                                        key: l,
+                                        text: l,
+                                        desc: locObj ? locObj.LOCATION_DESC : ""
+                                    };
+                                })
+                        }
+                        );
+
                         oModel.setSizeLimit(10000);
                         that.byId("mcLocation").setModel(oModel);
-                        that.byId("mcLocation").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
+                        // that.byId("mcLocation").se
 
                         // CONFIG_PRODUCT
                         let congifprod = [...new Set(oData.results.map(o => o.REF_PRODID))];
-                        let oConfigModel = new JSONModel(congifprod.map(c => ({ key: c, text: c })));
+                        let oConfigModel = new JSONModel({
+                            items:
+                                congifprod.map(l => {
+                                    let conObj = oData.results.find(d => d.REF_PRODID === l);
+                                    return {
+                                        key: l,
+                                        text: l,
+                                        desc: conObj ? conObj.REFPROD_DESC : ""
+                                    };
+                                })
+                        }
+                        );
                         oConfigModel.setSizeLimit(10000);
                         that.byId("mcConfig").setModel(oConfigModel);
-                        that.byId("mcConfig").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
+                        // that.byId("mcConfig").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
 
                         // PRODUCT_ID
                         let prodId = [...new Set(oData.results.map(o => o.PRODUCT_ID))];
-                        let oProdModel = new JSONModel(prodId.map(c => ({ key: c, text: c })));
+                        let oProdModel = new JSONModel({
+                            items:
+                                prodId.map(l => {
+                                    let prodobj = oData.results.find(d => d.PRODUCT_ID === l);
+                                    return {
+                                        key: l,
+                                        text: l,
+                                        desc: prodobj ? prodobj.PROD_DESC : ""
+                                    };
+                                })
+                        }
+                        );
                         oProdModel.setSizeLimit(10000);
                         that.byId("mcProduct").setModel(oProdModel);
-                        that.byId("mcProduct").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
+                        // that.byId("mcProduct").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
 
                         resolve(oData.results);
                     }.bind(this),
@@ -167,31 +202,72 @@ sap.ui.define([
         },
         onLocationSelect() {
             let aLocs = this.byId("mcLocation").getSelectedKey();
-            const fData = that.facdata.filter(o => aLocs === o.DEMAND_LOC)
+            const fData = that.facdata.filter(o => aLocs === o.DEMAND_LOC);
+
+            // CONFIG_PRODUCT
             let congifprod = [...new Set(fData.map(o => o.REF_PRODID))];
-            let oConfigModel = new JSONModel(congifprod.map(c => ({ key: c, text: c })));
+            let oConfigModel = new JSONModel({
+                items: congifprod.map(l => {
+                    let conObj = fData.find(d => d.REF_PRODID === l);
+                    return {
+                        key: l,
+                        text: l,
+                        desc: conObj ? conObj.REFPROD_DESC : ""
+                    };
+                })
+            });
             oConfigModel.setSizeLimit(10000);
             this.byId("mcConfig").setModel(oConfigModel);
-            this.byId("mcConfig").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
+            // this.byId("mcConfig").bindItems("/items", new sap.ui.core.ListItem({
+            //     key: "{key}",
+            //     text: "{text}",
+            //     additionalText: "{desc}"
+            // }));
 
             // PRODUCT_ID
             let prodId = [...new Set(fData.map(o => o.PRODUCT_ID))];
-            let oProdModel = new JSONModel(prodId.map(c => ({ key: c, text: c })));
+            let oProdModel = new JSONModel({
+                items: prodId.map(l => {
+                    let prodObj = fData.find(d => d.PRODUCT_ID === l);
+                    return {
+                        key: l,
+                        text: l,
+                        desc: prodObj ? prodObj.PROD_DESC : ""
+                    };
+                })
+            });
             oProdModel.setSizeLimit(10000);
             this.byId("mcProduct").setModel(oProdModel);
-            this.byId("mcProduct").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
+            // this.byId("mcProduct").bindItems("/items", new sap.ui.core.ListItem({
+            //     key: "{key}",
+            //     text: "{text}",
+            //     additionalText: "{desc}"
+            // }));
         },
         onConfigSelect() {
             let aCprod = this.byId("mcConfig").getSelectedKey();
             let aLoc = this.byId("mcLocation").getSelectedKey();
             const fData = that.facdata.filter(o => aCprod === o.REF_PRODID && aLoc === o.DEMAND_LOC);
 
-            // PRODUCT_ID
+            // PRODUCT_ID with Description
             let prodId = [...new Set(fData.map(o => o.PRODUCT_ID))];
-            let oProdModel = new JSONModel(prodId.map(c => ({ key: c, text: c })));
+            let oProdModel = new JSONModel({
+                items: prodId.map(l => {
+                    let prodObj = fData.find(d => d.PRODUCT_ID === l);
+                    return {
+                        key: l,
+                        text: l,
+                        desc: prodObj ? prodObj.PROD_DESC : ""
+                    };
+                })
+            });
             oProdModel.setSizeLimit(10000);
             this.byId("mcProduct").setModel(oProdModel);
-            this.byId("mcProduct").bindItems("/", new sap.ui.core.Item({ key: "{key}", text: "{text}" }));
+            this.byId("mcProduct").bindItems("/items", new sap.ui.core.ListItem({
+                key: "{key}",
+                text: "{text}",
+                additionalText: "{desc}"
+            }));
         },
         onApplyFilters: async function () {
 
