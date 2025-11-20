@@ -15,8 +15,6 @@
                     <fb:filterGroupItems>
                         <fb:FilterGroupItem name="Location" mandatory="true" label="Location" groupName="Group1" visibleInFilterBar="true">
                             <fb:control>
-                                <!-- <ComboBox id="mcLocation" selectionChange=".onLocationSelect" />
-                                 -->
                                 <ComboBox id="mcLocation" selectionChange=".onLocationSelect" showSecondaryValues="true" items="{/items}">
                                     <core:ListItem key="{key}" text="{text}" additionalText ="{desc}" />
                                 </ComboBox>
