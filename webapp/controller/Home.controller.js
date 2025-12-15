@@ -11,6 +11,12 @@ sap.ui.define([
             that = this;
             that.oModel = that.getOwnerComponent().getModel("oModel");
             that.pivotPage = that.byId("idPivotPagePOP");
+            if (sap.ushell) {
+                that.sUser = sap.ushell?.Container?.getService("UserInfo")?.getEmail()
+            }
+            if(!that.sUser){
+            that.sUser='null';
+        }
         },
         async onAfterRendering() {
             that.byId("toolBar").setVisible(false);
@@ -18,9 +24,9 @@ sap.ui.define([
         },
         loadAll() {
             return new Promise((resolve, reject) => {
-                that.oModel.read("/getfactorylocdesc", {
+                that.oModel.read("/getRolesLocProd", {
                     urlParameters: {
-                        "$apply": "groupby((DEMAND_LOC,LOCATION_DESC,PRODUCT_ID,PROD_DESC,REF_PRODID,REFPROD_DESC))",
+                        "$apply": `filter(USER eq '${that.sUser}')/groupby((DEMAND_LOC,LOCATION_DESC,PRODUCT_ID,PROD_DESC,REF_PRODID,REFPROD_DESC))`,
                         "$top": 10000
                     },
                     success: function (oData) {
@@ -734,7 +740,9 @@ sap.ui.define([
                                 $(this).find('th:first').addClass('BlueFont')
                             }
 
-                            const lineHeight = Number(order_qty) * 0.001;
+                            // const lineHeight = Number(order_qty) * 0.001;
+                            const percent = that.myMapPrId.size >= 50 ? 0.001 : 0.05;
+                            const lineHeight = Number(order_qty) * percent;
 
                             $($(this).find('th:first')).css('line-height', lineHeight);
                             $(this).find('td').css('line-height', lineHeight);
